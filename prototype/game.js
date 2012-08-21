@@ -1,5 +1,5 @@
 $(document).ready(function () {
-	var IMG_SPRITE = "img/sprite.png";
+	var IMG_SPRITE = "img/sprite_bman.png";
 	var IMG_SKY = "img/Sky_back_layer.png";
 	var IMG_EXPLOSION = "img/explosion.png";
 	
@@ -12,6 +12,7 @@ $(document).ready(function () {
 	
 	//start crafty
 	Crafty.init(WINDOW_WIDTH, WINDOW_HEIGHT);
+	Crafty.canvas.init();
 
     //turn the sprite map into usable components
     Crafty.sprite(16, IMG_SPRITE, {
@@ -24,7 +25,7 @@ $(document).ready(function () {
         bush2: [1, 2],
         player: [0, 3],
         enemy: [0, 3],
-        banana: [4, 0],
+        projectile: [4, 0],
         empty: [4, 0],
     });
 	
@@ -35,7 +36,7 @@ $(document).ready(function () {
             	
                 // place grass on all tiles
                 var grass = Crafty.e("2D, DOM, grass" + Crafty.math.randomInt(1, 4) + ", Collision, solid, explodable, ground")
-			                    .attr({ x: tileX * 16, y: GROUND_HEIGHT + tileY * 16, z:1, })
+			                    .attr({ x: tileX * 16, y: GROUND_HEIGHT + tileY * 16, z: 1, })
 			                    .bind('explode', function() {
 			                        this.destroy();
 			                    })
@@ -88,7 +89,7 @@ $(document).ready(function () {
              * the width of the original image).
              */
             this._bgImage = Crafty.e("2D, DOM, Image").image(IMG_SKY, "repeat")
-                                    .attr({x:0, y:0, w: WINDOW_WIDTH * 10, h:WINDOW_HEIGHT * 3});
+                                    .attr({x:0, y:0, w: WINDOW_WIDTH * 10, h: WINDOW_HEIGHT * 3, z: 0});
                                     
             /* Move the image entities to the left (by different offsets) on every 'EnterFrame'
              * Also, if we move them too far, adjust by adding one image width 
@@ -134,11 +135,11 @@ $(document).ready(function () {
                 }
                 
                 if(this._dropped < this.maxBombs) {
-                    Crafty.e('BananaBomb')
+                    Crafty.e('ExplodingProjectile')
                         .attr({z:100})
                         .col(this.col())
                         .row(this.row())
-                        .BananaBomb()
+//                        .ExplodingProjectile()
                         .bind('explode', function() {
                             dropper._dropped--;
                         });
@@ -153,12 +154,12 @@ $(document).ready(function () {
         }
     });
     
-    Crafty.c('BananaBomb', {
+    Crafty.c('ExplodingProjectile', {
 
         init: function() {
-            this.requires("2D, DOM, SpriteAnimation, Grid, banana, explodable")
-                .animate('explode', 4, 0, 5)
-                .animate('explode', 50, -1)
+            this.requires("2D, DOM, SpriteAnimation, Grid, projectile, explodable")
+                .animate('fly', 4, 0, 6)
+                .animate('fly', 10, -1)
                 .timeout(function() {
                     this.trigger("explode");
                 }, 1000)
@@ -166,22 +167,22 @@ $(document).ready(function () {
                     this.destroy();
 
                     // create explosion
-                    Crafty.e("BananaExplosion")
+                    Crafty.e("ProjectileExplosion")
                     	.attr({ x: this.x, y: this.y, z: 8000 });
                 });
         },
-
-        BananaBomb: function() {
-            //Create shadow fire to help the AI
-            for(var i = this.col() - 2; i < this.col()+3; i++)
-                Crafty.e("ShadowBananaFire").attr({ z:8000 }).col(i).row(this.row());
-            for(var i = this.row() - 2; i < this.row()+3; i++)
-                Crafty.e("ShadowBananaFire").attr({ z:8000 }).col(this.col()).row(i);
-            return this;
-        }
+//
+//        BananaBomb: function() {
+//            //Create shadow fire to help the AI
+//            for(var i = this.col() - 2; i < this.col()+3; i++)
+//                Crafty.e("ShadowBananaFire").attr({ z:8000 }).col(i).row(this.row());
+//            for(var i = this.row() - 2; i < this.row()+3; i++)
+//                Crafty.e("ShadowBananaFire").attr({ z:8000 }).col(this.col()).row(i);
+//            return this;
+//        }
     });
     
-    Crafty.c('BananaExplosion', {
+    Crafty.c('ProjectileExplosion', {
         init: function() {
         	var img = Crafty.e("2D, DOM, Image")
         					.image(IMG_EXPLOSION)
@@ -202,16 +203,16 @@ $(document).ready(function () {
     });
     
     // Helps the AI avoid unsafe tiles. Created when a bomb is dropped and removed after fire is gone
-    Crafty.c('ShadowBananaFire', {
-
-        init: function() {
-            this.requires("2D, Grid, empty, Collision, ShadowFire")
-                .collision()
-                .timeout(function() {
-                    this.destroy();
-                }, 6100);
-        }
-    });
+//    Crafty.c('ShadowBananaFire', {
+//
+//        init: function() {
+//            this.requires("2D, Grid, empty, Collision, ShadowFire")
+//                .collision()
+//                .timeout(function() {
+//                    this.destroy();
+//                }, 6100);
+//        }
+//    });
     
     Crafty.c('Grid', {
         _cellSize: 16,
@@ -334,10 +335,10 @@ $(document).ready(function () {
         Ape: function() {
                 //setup animations
                 this.requires("SpriteAnimation, Collision, Mouse")
-                .animate("walk_left", 6, 3, 8)
-                .animate("walk_right", 9, 3, 11)
-                .animate("walk_up", 3, 3, 5)
-                .animate("walk_down", 0, 3, 2)
+	                .animate("walk_left", 6, 3, 8)
+	                .animate("walk_right", 9, 3, 11)
+	                .animate("walk_up", 3, 3, 5)
+	                .animate("walk_down", 0, 3, 2)
                 //change direction when a direction change event is received
                 .bind("NewDirection",
                     function (direction) {
@@ -387,6 +388,33 @@ $(document).ready(function () {
             return this;
         }
     });
+
+    Crafty.c("Polygon",{
+        _points:[],
+        _ctx:null,
+        _can:null,
+        
+        init:function(){
+            this._ctx = Crafty.canvas.context;
+            this._can = Crafty.canvas._canvas;
+            
+            this.bind("EnterFrame",function(){
+            this.draw();
+            })
+        },
+        draw:function(){
+       //  this._can.width = this._can.width;
+         this._ctx.beginPath();
+            for(var i in this._points){
+            var p = this._points[i];
+               
+                this._ctx.lineTo(Crafty.viewport.x+p[0], Crafty.viewport.y+p[1]);
+            }
+            this._ctx.closePath();
+            this._ctx.stroke();
+           
+        }
+    });  
     
     Crafty.c("PlayerControls", {
         init: function() {
@@ -411,7 +439,7 @@ $(document).ready(function () {
         };
         
         generateWorld();
-        
+    	
         //create our player entity with some premade components
         var player1 = Crafty.e("2D, DOM, Ape, player, PlayerControls, BombDropper, Gravity")
                 .attr({ x: 200, y: GROUND_HEIGHT - 16, z: 1 })
@@ -449,7 +477,7 @@ $(document).ready(function () {
         				y: 100 * player.powerAmount * Math.sin(angle),
         		};
         		player.isFiring = false;
-                var projectile = Crafty.e("2D, DOM, BananaBomb, Gravity, Tween")
+                var projectile = Crafty.e("2D, DOM, ExplodingProjectile, Gravity, Tween")
     						            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10 })
     					                .gravity("ground")
     					                .tween({ x: player.x + targetPoint.x, y: player.y - targetPoint.y }, (6 - player.powerAmount) * 24);
@@ -479,6 +507,11 @@ $(document).ready(function () {
         			player.powerAmount = Math.floor(distance / 20);
         		}
         		
+        		// draw the slingshot
+//        		Crafty.e("2D, Canvas, Slingshot")
+//					.attr({x: player.x, y: player.y, z: 8000})
+//        	    	.Slingshot(90, "#FF0000");
+        		
         		Crafty.trigger("UpdatePower");
         	}
         });
@@ -489,4 +522,13 @@ $(document).ready(function () {
     $(this).mousewheel(function(event, delta) {
     	Crafty.viewport.zoom(delta, 0, 0, 5);
     });
+
+    
+    var poly = Crafty.e("Polygon");
+            var points = [[0,0],[0,100],[100,100],[100,50],[150,50],[150,0]]
+                poly.attr({_points:points, z: 9000});
+
+    var poly2 = Crafty.e("Polygon");
+            var points2 = [[200,0],[300,0],[300,100],[200,100]]
+                poly2.attr({_points:points2, z: 9000});
 });
