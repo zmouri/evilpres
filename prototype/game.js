@@ -13,6 +13,7 @@ $(document).ready(function () {
 	//start crafty
 	Crafty.init(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Crafty.canvas.init();
+    Crafty.canvas._canvas.style.zIndex = '9000';
 
     //turn the sprite map into usable components
     Crafty.sprite(16, IMG_SPRITE, {
@@ -388,33 +389,40 @@ $(document).ready(function () {
             return this;
         }
     });
-
-    Crafty.c("Polygon",{
-        _points:[],
-        _ctx:null,
-        _can:null,
-        
-        init:function(){
-            this._ctx = Crafty.canvas.context;
-            this._can = Crafty.canvas._canvas;
+    
+    Crafty.c("Circle", {
+        Circle: function(radius, color) {
+            this.radius = radius;
+            this.w = this.h = radius * 2;
+            this.color = color || "#000000";
             
-            this.bind("EnterFrame",function(){
-            this.draw();
-            })
+            return this;
         },
-        draw:function(){
-       //  this._can.width = this._can.width;
-         this._ctx.beginPath();
-            for(var i in this._points){
-            var p = this._points[i];
-               
-                this._ctx.lineTo(Crafty.viewport.x+p[0], Crafty.viewport.y+p[1]);
-            }
-            this._ctx.closePath();
-            this._ctx.stroke();
-           
+        
+        draw: function() {
+           var ctx = Crafty.canvas.context;
+           ctx.save();
+           ctx.fillStyle = this.color;
+           ctx.beginPath();
+           ctx.arc(
+               this.x + this.radius,
+               this.y + this.radius,
+               this.radius,
+               0,
+               Math.PI * 2
+           );
+           ctx.closePath();
+           ctx.fill();
         }
-    });  
+    });
+    
+    Crafty.c("Slingshot", {
+        Slingshot: function(x, y) {
+            Crafty.e("2D, Canvas, Circle")
+            	.attr({ x: x, y: y })
+                .Circle(40, "#FF0000");
+        }
+    });
     
     Crafty.c("PlayerControls", {
         init: function() {
@@ -488,6 +496,10 @@ $(document).ready(function () {
                 $(this).unbind('mouseup');
                 $(this).unbind('mousemove');
             	Crafty.viewport.mouselook(true);
+            	
+            	// remove slingshot
+            	// TODO not working
+        		Crafty("Slingshot").destroy();
         	}
         });
         
@@ -508,9 +520,8 @@ $(document).ready(function () {
         		}
         		
         		// draw the slingshot
-//        		Crafty.e("2D, Canvas, Slingshot")
-//					.attr({x: player.x, y: player.y, z: 8000})
-//        	    	.Slingshot(90, "#FF0000");
+        		Crafty.e("Slingshot")
+        	    	.Slingshot(player.x, player.y);
         		
         		Crafty.trigger("UpdatePower");
         	}
@@ -522,13 +533,4 @@ $(document).ready(function () {
     $(this).mousewheel(function(event, delta) {
     	Crafty.viewport.zoom(delta, 0, 0, 5);
     });
-
-    
-    var poly = Crafty.e("Polygon");
-            var points = [[0,0],[0,100],[100,100],[100,50],[150,50],[150,0]]
-                poly.attr({_points:points, z: 9000});
-
-    var poly2 = Crafty.e("Polygon");
-            var points2 = [[200,0],[300,0],[300,100],[200,100]]
-                poly2.attr({_points:points2, z: 9000});
 });
