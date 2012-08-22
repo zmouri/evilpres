@@ -5,11 +5,14 @@ $(document).ready(function () {
 	
 	var GROUND_HEIGHT = 100;
 	var EXPLOSION_RADIUS = 70;
+	var MAX_PLAYERS = 2;
 	
 	var DIRECTION = {
 			LEFT : -1,
 			RIGHT: 1,
 	};
+	
+	var currentTurn = 1;
 	
 	// get the browser window size
 	var WINDOW_HEIGHT = 400;	//$(window).height();
@@ -27,8 +30,7 @@ $(document).ready(function () {
         grass3: [2, 0],
         grass4: [3, 0],
         flower: [0, 1],
-        bush1: [0, 2],
-        bush2: [1, 2],
+        bush: [0, 2],
         player: [0, 3],
         enemy: [0, 3],
         projectile: [4, 0],
@@ -41,51 +43,27 @@ $(document).ready(function () {
             for (var tileY = 0; tileY < WINDOW_HEIGHT / 16; tileY++) {
             	
                 // place grass on all tiles
-                var grass = Crafty.e("2D, DOM, grass" + Crafty.math.randomInt(1, 4) + ", Collision, solid, explodable, ground")
-			                    .attr({ x: tileX * 16, y: WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, z: 1, })
-			                    .bind('explode', function() {
-			                        this.destroy();
-			                    })
-			                    .collision();
+        		createBaseTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 1);
                 
-                if(grass.hit('explosion')) {
-                	grass.destroy();
-                }
-                
-                // flowers and bushes on the top ground layer
-                if(tileY === 0) {                    
-                	var isFlower = Crafty.math.randomInt(1, 50);
-                	if(isFlower > 30) {
-                        var flowers = Crafty.e("2D, DOM, flower, Collision, solid, SpriteAnimation, explodable, ground")
-					                        .attr({ x: tileX * 16, y: WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, z: 1000, })
-					                        .animate('wind', 0, 1, 3)
-					                        .animate('wind', 80, -1)
-					                        .bind('explode', function() {
-					                            this.destroy();
-					                        })
-					                        .collision();
-                        
-		                if(flowers.hit('explosion')) {
-		                	flowers.destroy();
-		                }
-                	}
-                	else {
-	                    var bushes = Crafty.e("2D, DOM, solid, bush1, Collision, SpriteAnimation, explodable, ground")
-				                    	.attr({ x: tileX * 16, y: WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, z: 2000, })
-				                        .animate('wind', 0, 2, 1)
-				                        .animate('wind', 80, -1)
-				                        .bind('explode', function() {
-				                            this.destroy();
-				                        })
-				                        .collision();
-	                    
-		                if(bushes.hit('explosion')) {
-		                    bushes.destroy();
-		                }
-                	}
+                // flowers and bushes on the top ground layer minus obstacles
+            	// TODO remove hardcoding
+                if(tileY === 0 && (tileX > 15) && (tileX < 31 || tileX > 40) && (tileX < 54 || tileX > 63)) {
+                	createSurfaceTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 2);
                 }
             }
         }
+    }
+    
+    function endTurn() {
+		Crafty.trigger("EndTurn", currentTurn);
+		
+    	currentTurn++;
+    	if(currentTurn > MAX_PLAYERS) {
+    		currentTurn = 1;
+    	}
+		Crafty.trigger("UpdateTurn");
+    	
+		Crafty.trigger("StartTurn", currentTurn);
     }
         
     Crafty.c("Scroller", {
@@ -130,7 +108,7 @@ $(document).ready(function () {
         maxBombs: 2,
         _key: Crafty.keys.SPACE,
 
-        init: function() {
+        BombDropper: function() {
             var dropper = this;
             this.requires('Grid')
 
@@ -153,11 +131,30 @@ $(document).ready(function () {
                     this._dropped++;
                 }
             });
-        },
-        bombDropper: function(key) {
-            this._key = key;
+            
             return this;
-        }
+        },
+    });
+    
+    Crafty.c('RangedAttacker', {
+        RangedAttacker: function() {
+            this.requires('Mouse')
+	            .bind("MouseDown", function(e) {
+		    		if(e.mouseButton == Crafty.mouseButtons.LEFT) {
+			    		this.isFiring = true;
+			    		this.powerAmount = 0;
+			    		
+			        	Crafty.trigger("Firing", this);
+			        	
+			    		// disable mouse look
+	//		            Crafty.viewport.mouselook(false);
+			            
+			            // TODO need to disable movement
+		    		}
+	            });
+            
+            return this;
+        },
     });
     
     Crafty.c('ExplodingProjectile', {
@@ -176,6 +173,9 @@ $(document).ready(function () {
                     
                     // remove projectile
                     this.destroy();
+
+            		// end current turn
+                    endTurn();
                 });
         },
 //
@@ -335,14 +335,17 @@ $(document).ready(function () {
         }
     });
     
-    Crafty.c('Ape', {
+    Crafty.c('Character', {
     	isFiring: false,
     	powerAmount: 0,
     	faceDirection: 0,
+    	playerNum: 0,
     	
-        Ape: function() {
+    	Character: function(num) {
+    			this.playerNum = num;
+    			
                 //setup animations
-                this.requires("SpriteAnimation, Collision, Mouse")
+                this.requires("SpriteAnimation, Collision, solid")
 	                .animate("walk_left", 6, 3, 8)
 	                .animate("walk_right", 9, 3, 11)
 	                .animate("walk_up", 3, 3, 5)
@@ -394,22 +397,28 @@ $(document).ready(function () {
                 .onHit("fire", function() {
                     this.destroy();
                 })
-                .bind("MouseDown", function(e) {
-		    		if(e.mouseButton == Crafty.mouseButtons.LEFT) {
-			    		this.isFiring = true;
-			    		this.powerAmount = 0;
-			    		
-			        	Crafty.trigger("Firing", this);
-			        	
-			    		// disable mouse look
-			            Crafty.viewport.mouselook(false);
-			            
-			            // TODO need to disable movement
-		    		}
+                .bind("StartTurn", function (turnNum) {
+                    if (this.playerNum === turnNum) {
+                    	this.addComponent("BombDropper")
+                    		.addComponent("RangedAttacker")
+                    		.addComponent("Twoway")
+                    		.BombDropper()
+                    		.RangedAttacker()
+                    		.twoway(4, 3);
+                    }
+                })
+                .bind("EndTurn", function (turnNum) {
+                    if (this.playerNum === turnNum) {
+        	    		this.removeComponent("BombDropper")
+        	    			.removeComponent("RangedAttacker")
+        	    			.removeComponent("Twoway")
+        	    			.unbind('MouseDown')
+        	    			.unbind('KeyDown');
+                    }
                 });
             	
             return this;
-        }
+        },
     });
     
     Crafty.c("Circle", {
@@ -535,41 +544,42 @@ $(document).ready(function () {
         }
     });
     
-    Crafty.c("PlayerControls", {
-        init: function() {
-            this.requires('Twoway');
-        },
-        
-        playerControls: function(speed, jumpSpeed) {
-            this.twoway(speed, jumpSpeed);
-            return this;
-        }
-        
-    });
-    
     Crafty.scene("main", function () {
         var bars = {
-            power: $('#power')
+            power: $('#power'),
+            turn: $('#turn'),
         };
         bars.power.addClass('green');
         
         var info = {
-            powerAmount: bars.power.find('.text')
+            powerAmount: bars.power.find('.text'),
+            turn: bars.turn.find('.text'),
         };
         
         generateWorld();
+        addObstacles();
     	
         //create our player entity with some premade components
-        var player1 = Crafty.e("2D, DOM, Ape, player, PlayerControls, BombDropper, Gravity")
-                .attr({ x: 200, y: WINDOW_HEIGHT - GROUND_HEIGHT - 16, z: 1 })
-                .playerControls(4, 3)
+        var player1 = Crafty.e("2D, DOM, Character, player, Twoway, BombDropper, RangedAttacker, Gravity")
+                .attr({ x: 80, y: WINDOW_HEIGHT - GROUND_HEIGHT - 32, z: 1 })
                 .gravity("ground")
-                .Ape();
+                .twoway(4, 3)
+                .Character(1)
+                .BombDropper()
+                .RangedAttacker();
         
-        Crafty.bind("UpdatePower", function() {
-        	info.powerAmount.text(player1.powerAmount);
+        var player2 = Crafty.e("2D, DOM, Character, player, Gravity")
+		        .attr({ x: 912, y: 176, z: 1 })
+		        .gravity("ground")
+		        .Character(2);
+		
+        Crafty.bind("UpdatePower", function(player) {
+        	info.powerAmount.text(player.powerAmount);
         });
-    	
+        
+        Crafty.bind("UpdateTurn", function() {
+        	info.turn.text(currentTurn);
+        });    	
 
         Crafty.bind("Firing", function(player) {
         	// bind new mouse events
@@ -602,12 +612,12 @@ $(document).ready(function () {
     					                .gravity("ground")
     					                .tween({ x: player.x + targetPoint.x, y: player.y - targetPoint.y }, (6 - player.powerAmount) * 24);
         		player.powerAmount = 0;
-        		Crafty.trigger("UpdatePower");
+        		Crafty.trigger("UpdatePower", player);
         		
         		// unbind mouse events and re-enable mouselook
                 $(this).unbind('mouseup');
                 $(this).unbind('mousemove');
-            	Crafty.viewport.mouselook(true);
+//            	Crafty.viewport.mouselook(true);
             	
             	// remove slingshot
         		Crafty("Slingshot").destroy();
@@ -658,7 +668,7 @@ $(document).ready(function () {
     	    		.attach(Crafty.e("SlingshotArrow")
 	    					.SlingshotArrow(player.x, player.y, 2 * player.x - event.clientX, 2 * player.y - event.clientY, distance, intensity));
             	
-        		Crafty.trigger("UpdatePower");
+        		Crafty.trigger("UpdatePower", player);
 
         		// if the mouse is behind the character, swivel
         		if(event.clientX > player.x) {
@@ -669,11 +679,13 @@ $(document).ready(function () {
         		}
         	}
         });
+
+		Crafty.trigger("UpdateTurn");
     });
     
-    Crafty.viewport.mouselook(true);
+//    Crafty.viewport.mouselook(true);
     
-    $(this).mousewheel(function(event, delta) {
-    	Crafty.viewport.zoom(delta, 0, 0, 5);
-    });
+//    $(this).mousewheel(function(event, delta) {
+//    	Crafty.viewport.zoom(delta, 0, 0, 5);
+//    });
 });
