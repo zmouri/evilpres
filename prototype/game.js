@@ -3,8 +3,13 @@ $(document).ready(function () {
 	var IMG_SKY = "img/Sky_back_layer.png";
 	var IMG_EXPLOSION = "img/explosion.png";
 	
-	var GROUND_HEIGHT = 200;
+	var GROUND_HEIGHT = 100;
 	var EXPLOSION_RADIUS = 70;
+	
+	var DIRECTION = {
+			LEFT : -1,
+			RIGHT: 1,
+	};
 	
 	// get the browser window size
 	var WINDOW_HEIGHT = 400;	//$(window).height();
@@ -37,7 +42,7 @@ $(document).ready(function () {
             	
                 // place grass on all tiles
                 var grass = Crafty.e("2D, DOM, grass" + Crafty.math.randomInt(1, 4) + ", Collision, solid, explodable, ground")
-			                    .attr({ x: tileX * 16, y: GROUND_HEIGHT + tileY * 16, z: 1, })
+			                    .attr({ x: tileX * 16, y: WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, z: 1, })
 			                    .bind('explode', function() {
 			                        this.destroy();
 			                    })
@@ -52,7 +57,7 @@ $(document).ready(function () {
                 	var isFlower = Crafty.math.randomInt(1, 50);
                 	if(isFlower > 30) {
                         var flowers = Crafty.e("2D, DOM, flower, Collision, solid, SpriteAnimation, explodable, ground")
-					                        .attr({ x: tileX * 16, y: GROUND_HEIGHT + tileY * 16, z: 1000, })
+					                        .attr({ x: tileX * 16, y: WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, z: 1000, })
 					                        .animate('wind', 0, 1, 3)
 					                        .animate('wind', 80, -1)
 					                        .bind('explode', function() {
@@ -66,7 +71,7 @@ $(document).ready(function () {
                 	}
                 	else {
 	                    var bushes = Crafty.e("2D, DOM, solid, bush1, Collision, SpriteAnimation, explodable, ground")
-				                    	.attr({ x: tileX * 16, y: GROUND_HEIGHT + tileY * 16, z: 2000, })
+				                    	.attr({ x: tileX * 16, y: WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, z: 2000, })
 				                        .animate('wind', 0, 2, 1)
 				                        .animate('wind', 80, -1)
 				                        .bind('explode', function() {
@@ -165,11 +170,12 @@ $(document).ready(function () {
                     this.trigger("explode");
                 }, 1000)
                 .bind('explode', function() {
-                    this.destroy();
-
                     // create explosion
                     Crafty.e("ProjectileExplosion")
                     	.attr({ x: this.x, y: this.y, z: 8000 });
+                    
+                    // remove projectile
+                    this.destroy();
                 });
         },
 //
@@ -332,6 +338,7 @@ $(document).ready(function () {
     Crafty.c('Ape', {
     	isFiring: false,
     	powerAmount: 0,
+    	faceDirection: 0,
     	
         Ape: function() {
                 //setup animations
@@ -344,10 +351,12 @@ $(document).ready(function () {
                 .bind("NewDirection",
                     function (direction) {
                         if (direction.x < 0) {
+                        	this.faceDirection = DIRECTION.LEFT;
                             if (!this.isPlaying("walk_left"))
                                 this.stop().animate("walk_left", 10, -1);
                         }
                         if (direction.x > 0) {
+                        	this.faceDirection = DIRECTION.RIGHT;
                             if (!this.isPlaying("walk_right"))
                                 this.stop().animate("walk_right", 10, -1);
                         }
@@ -363,6 +372,19 @@ $(document).ready(function () {
                             this.stop();
                         }
                 })
+                .bind("FaceNewDirection",
+                        function (direction) {
+                            if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
+                            	this.faceDirection = DIRECTION.LEFT;
+                                if (!this.isPlaying("walk_left"))
+                                    this.stop().animate("walk_left", 10, 1);
+                            }
+                            if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
+                            	this.faceDirection = DIRECTION.RIGHT;
+                                if (!this.isPlaying("walk_right"))
+                                    this.stop().animate("walk_right", 10, 1);
+                            }
+                    })
                 // A rudimentary way to prevent the user from passing solid areas
                 .bind('Moved', function(from) {
                     if(this.hit('solid')){
@@ -402,25 +424,114 @@ $(document).ready(function () {
         draw: function() {
            var ctx = Crafty.canvas.context;
            ctx.save();
+           ctx.strokeStyle = this.color;
+           ctx.beginPath();
+           ctx.arc(
+               this.x,
+               this.y,
+               this.radius,
+               0,
+               Math.PI * 2               
+           );
+           ctx.closePath();
+           ctx.stroke();
+        }
+    });
+    
+    Crafty.c("SolidCircle", {
+    	SolidCircle: function(radius, color) {
+            this.radius = radius;
+            this.w = this.h = radius * 2;
+            this.color = color || "#000000";
+            
+            return this;
+        },
+        
+        draw: function() {
+           var ctx = Crafty.canvas.context;
+           ctx.save();
            ctx.fillStyle = this.color;
            ctx.beginPath();
            ctx.arc(
-               this.x + this.radius,
-               this.y + this.radius,
+               this.x,
+               this.y,
                this.radius,
                0,
-               Math.PI * 2
+               Math.PI * 2               
            );
            ctx.closePath();
            ctx.fill();
         }
     });
     
+    Crafty.c("SolidPolygon", {
+    	SolidPolygon: function(points, color, angle, origin) {
+            this.points = points;
+            this.color = color || "#000000";
+            this.angle = angle || 0;
+            this.origin = origin || [0, 0];
+            
+            return this;
+        },
+        
+        draw: function() {
+            var ctx = Crafty.canvas.context;
+            ctx.save();
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            for(var i in this.points){
+            	var p = this.points[i];
+            	var o = this.origin;
+            	var rotatedPoint = [(p[0] - o[0]) * Math.cos(this.angle) - (p[1] - o[1]) * Math.sin(this.angle) + o[0], (p[0] - o[0]) * Math.sin(this.angle) + (p[1] - o[1]) * Math.cos(this.angle) + o[1]];
+            	
+                ctx.lineTo(Crafty.viewport.x + rotatedPoint[0], Crafty.viewport.y + rotatedPoint[1]);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+    });
+    
     Crafty.c("Slingshot", {
-        Slingshot: function(x, y) {
-            Crafty.e("2D, Canvas, Circle")
-            	.attr({ x: x, y: y })
-                .Circle(40, "#FF0000");
+        init: function() {
+            this.requires('2D, Canvas, Circle');
+        },
+        
+        Slingshot: function(x, y, radius, color) {        	
+        	this.Circle(radius, color)
+        		.attr({ x: x, y: y });
+            return this;
+        }
+    });
+    
+    Crafty.c("SlingshotAnchor", {
+        init: function() {
+            this.requires('2D, Canvas, SolidCircle');
+        },
+        
+        SlingshotAnchor: function(x, y, color) {
+        	var anchorRadius = 2;
+        	this.SolidCircle(anchorRadius, color)
+        		.attr({ x: x, y: y });
+            return this;
+        }
+    });
+
+    Crafty.c("SlingshotArrow", {
+        init: function() {
+            this.requires('2D, Canvas, SolidPolygon');
+        },
+        
+        // construct an equilateral triangle
+        SlingshotArrow: function(centerX, centerY, x, y, color) {
+        	var arrowSize = 20;
+    		var slope = y / x;
+    		var angle = Math.atan(slope);
+    		var point1 = [x, y - arrowSize * Math.sqrt(3) / 4];
+    		var point2 = [x - arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
+    		var point3 = [x + arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
+        	this.SolidPolygon([point1, point2, point3], color, angle, [x, y])
+        		.attr({ x: x, y: y });
+            return this;
         }
     });
     
@@ -450,7 +561,7 @@ $(document).ready(function () {
     	
         //create our player entity with some premade components
         var player1 = Crafty.e("2D, DOM, Ape, player, PlayerControls, BombDropper, Gravity")
-                .attr({ x: 200, y: GROUND_HEIGHT - 16, z: 1 })
+                .attr({ x: 200, y: WINDOW_HEIGHT - GROUND_HEIGHT - 16, z: 1 })
                 .playerControls(4, 3)
                 .gravity("ground")
                 .Ape();
@@ -481,9 +592,10 @@ $(document).ready(function () {
         		// y = p cos a
         		var angle = Math.atan(Math.abs(event.clientY - player.y) / Math.abs(event.clientX - player.x));
         		var targetPoint = {
-        				x: 100 * player.powerAmount * Math.cos(angle),
+        				x: 100 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
         				y: 100 * player.powerAmount * Math.sin(angle),
         		};
+        		
         		player.isFiring = false;
                 var projectile = Crafty.e("2D, DOM, ExplodingProjectile, Gravity, Tween")
     						            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10 })
@@ -498,7 +610,6 @@ $(document).ready(function () {
             	Crafty.viewport.mouselook(true);
             	
             	// remove slingshot
-            	// TODO not working
         		Crafty("Slingshot").destroy();
         	}
         });
@@ -519,11 +630,43 @@ $(document).ready(function () {
         			player.powerAmount = Math.floor(distance / 20);
         		}
         		
-        		// draw the slingshot
+        		// calculate color intensity based on power
+        		var intensity;
+        		switch(player.powerAmount) {
+	        		case 1:
+	        			intensity = "#0055bb";
+	        			break;
+	        		case 2:
+	        			intensity = "#00dd00";
+	        			break;
+	        		case 3:
+	        			intensity = "#ffff33";
+	        			break;
+	        		case 4:
+	        			intensity = "#ff8811";
+	        			break;
+	        		default:
+	        			intensity = "#bb0033";
+        		}
+
+        		// remove any existing slingshots and draw a new one
+        		Crafty("Slingshot").destroy();
         		Crafty.e("Slingshot")
-        	    	.Slingshot(player.x, player.y);
-        		
+    	    		.Slingshot(player.x, player.y, distance, intensity)
+    	    		.attach(Crafty.e("SlingshotAnchor")
+    	    					.SlingshotAnchor(event.clientX, event.clientY, intensity))
+    	    		.attach(Crafty.e("SlingshotArrow")
+	    					.SlingshotArrow(player.x, player.y, 2 * player.x - event.clientX, 2 * player.y - event.clientY, distance, intensity));
+            	
         		Crafty.trigger("UpdatePower");
+
+        		// if the mouse is behind the character, swivel
+        		if(event.clientX > player.x) {
+        			Crafty.trigger("FaceNewDirection", -1);
+        		}
+        		else {
+        			Crafty.trigger("FaceNewDirection", 1);
+        		}
         	}
         });
     });
