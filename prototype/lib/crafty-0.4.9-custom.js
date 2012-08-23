@@ -6335,6 +6335,7 @@ Crafty.c("Multiway", {
 	*/
   enableControl: function() {
 		this.bind("KeyDown", this._keydown)
+		.bind("KeyDown", this.jump)	// twoway jump
 		.bind("KeyUp", this._keyup)
 		.bind("EnterFrame", this._enterframe);
 		return this;
@@ -6355,6 +6356,7 @@ Crafty.c("Multiway", {
 
   disableControl: function() {
 		this.unbind("KeyDown", this._keydown)
+		.unbind("KeyDown", this.jump)	// twoway jump
 		.unbind("KeyUp", this._keyup)
 		.unbind("EnterFrame", this._enterframe);
 		return this;
@@ -6471,12 +6473,15 @@ Crafty.c("Twoway", {
 				this.y -= jump;
 				this._falling = true;
 			}
-		}).bind("KeyDown", function () {
-			if (this.isDown("UP_ARROW") || this.isDown("W") || this.isDown("Z")) this._up = true;
-		});
+		})
+		.bind("KeyDown", this.jump);
 
 		return this;
-	}
+	},
+	
+	jump: function () {
+		if (this.isDown("UP_ARROW") || this.isDown("W") || this.isDown("Z")) this._up = true;
+	},
 });
  /**@
 * #SpriteAnimation

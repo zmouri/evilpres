@@ -173,9 +173,6 @@ $(document).ready(function () {
                     
                     // remove projectile
                     this.destroy();
-
-            		// end current turn
-                    endTurn();
                 });
         },
 //
@@ -345,7 +342,7 @@ $(document).ready(function () {
     			this.playerNum = num;
     			
                 //setup animations
-                this.requires("SpriteAnimation, Collision, solid")
+                this.requires("SpriteAnimation, Collision, solid, PlayerControl")
 	                .animate("walk_left", 6, 3, 8)
 	                .animate("walk_right", 9, 3, 11)
 	                .animate("walk_up", 3, 3, 5)
@@ -394,26 +391,37 @@ $(document).ready(function () {
                         this.attr({x: from.x, y:from.y});
                     }
                 })
+//                .onHit("solid", function(hit) {
+//                    for (var i = 0; i < hit.length; i++) {
+//                        if (hit[i].normal.y !== 0) { // we hit the top or bottom of it
+//                            this._up = false;
+//                        }
+//
+//                        if (hit[i].normal.x === 1) { // we hit the right side of it
+//                            this.x = hit[i].obj.x + hit[i].obj.w;
+//                        }
+//
+//                        if (hit[i].normal.x === -1) { // we hit the left side of it
+//                            this.x = hit[i].obj.x - this.w;
+//                        }
+//                    }
+//                })
                 .onHit("fire", function() {
                     this.destroy();
                 })
                 .bind("StartTurn", function (turnNum) {
                     if (this.playerNum === turnNum) {
-                    	this.addComponent("BombDropper")
-                    		.addComponent("RangedAttacker")
-                    		.addComponent("Twoway")
-                    		.BombDropper()
+                    	this.addComponent("RangedAttacker")
+//                    		.BombDropper()
                     		.RangedAttacker()
-                    		.twoway(4, 3);
+                    		.enableControl();
                     }
                 })
                 .bind("EndTurn", function (turnNum) {
                     if (this.playerNum === turnNum) {
-        	    		this.removeComponent("BombDropper")
-        	    			.removeComponent("RangedAttacker")
-        	    			.removeComponent("Twoway")
+        	    		this.removeComponent("RangedAttacker")
         	    			.unbind('MouseDown')
-        	    			.unbind('KeyDown');
+        	    			.disableControl();
                     }
                 });
             	
@@ -543,6 +551,16 @@ $(document).ready(function () {
             return this;
         }
     });
+
+    Crafty.c("PlayerControl", {
+        init: function() {
+            this.requires('Twoway');
+        },
+        
+        PlayerControl: function(speed, jumpSpeed) {
+        	return this.twoway(speed, jumpSpeed);
+        }
+    });
     
     Crafty.scene("main", function () {
         var bars = {
@@ -560,18 +578,21 @@ $(document).ready(function () {
         addObstacles();
     	
         //create our player entity with some premade components
-        var player1 = Crafty.e("2D, DOM, Character, player, Twoway, BombDropper, RangedAttacker, Gravity")
+        var player1 = Crafty.e("2D, DOM, Character, player, PlayerControl, RangedAttacker, Gravity")
                 .attr({ x: 80, y: WINDOW_HEIGHT - GROUND_HEIGHT - 32, z: 1 })
                 .gravity("ground")
-                .twoway(4, 3)
+                .PlayerControl(2, 4)
+//                .BombDropper()
+                .RangedAttacker()
                 .Character(1)
-                .BombDropper()
-                .RangedAttacker();
+    			.enableControl();
         
-        var player2 = Crafty.e("2D, DOM, Character, player, Gravity")
+        var player2 = Crafty.e("2D, DOM, Character, player, PlayerControl, Gravity")
 		        .attr({ x: 912, y: 176, z: 1 })
 		        .gravity("ground")
-		        .Character(2);
+                .PlayerControl(2, 4)
+		        .Character(2)
+    			.disableControl();
 		
         Crafty.bind("UpdatePower", function(player) {
         	info.powerAmount.text(player.powerAmount);
@@ -621,6 +642,9 @@ $(document).ready(function () {
             	
             	// remove slingshot
         		Crafty("Slingshot").destroy();
+        		
+        		// end current turn
+                endTurn();
         	}
         });
         
