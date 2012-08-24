@@ -34,6 +34,7 @@ $(document).ready(function () {
         player: [0, 3],
         enemy: [0, 3],
         projectile: [4, 0],
+        lineofsight: [4, 1],
         empty: [4, 0],
     });
 	
@@ -156,11 +157,30 @@ $(document).ready(function () {
             return this;
         },
     });
+
+    Crafty.c('LineOfSightAttack', {
+        init: function() {
+            this.requires("2D, DOM, SpriteAnimation, Grid, lineofsight, solid, Collision, explodable")
+                .animate('fly', 4, 1, 6)
+                .animate('fly', 10, -1)
+                .timeout(function() {
+                    this.trigger("explode");
+                }, 1000)
+                .bind('explode', function() {
+                    // create explosion
+                    Crafty.e("ProjectileExplosion")
+                    	.attr({ x: this.x, y: this.y, z: 8000 });
+                    
+                    // remove projectile
+                    this.destroy();
+                })
+                .collision();
+        },
+    });
     
     Crafty.c('ExplodingProjectile', {
-
         init: function() {
-            this.requires("2D, DOM, SpriteAnimation, Grid, projectile, explodable")
+            this.requires("2D, DOM, SpriteAnimation, Grid, projectile, solid, Collision, explodable")
                 .animate('fly', 4, 0, 6)
                 .animate('fly', 10, -1)
                 .timeout(function() {
@@ -173,7 +193,8 @@ $(document).ready(function () {
                     
                     // remove projectile
                     this.destroy();
-                });
+                })
+                .collision();
         },
 //
 //        BananaBomb: function() {
@@ -347,83 +368,84 @@ $(document).ready(function () {
 	                .animate("walk_right", 9, 3, 11)
 	                .animate("walk_up", 3, 3, 5)
 	                .animate("walk_down", 0, 3, 2)
-                //change direction when a direction change event is received
-                .bind("NewDirection",
-                    function (direction) {
-                        if (direction.x < 0) {
-                        	this.faceDirection = DIRECTION.LEFT;
-                            if (!this.isPlaying("walk_left"))
-                                this.stop().animate("walk_left", 10, -1);
-                        }
-                        if (direction.x > 0) {
-                        	this.faceDirection = DIRECTION.RIGHT;
-                            if (!this.isPlaying("walk_right"))
-                                this.stop().animate("walk_right", 10, -1);
-                        }
-                        if (direction.y < 0) {
-                            if (!this.isPlaying("walk_up"))
-                                this.stop().animate("walk_up", 10, -1);
-                        }
-                        if (direction.y > 0) {
-                            if (!this.isPlaying("walk_down"))
-                                this.stop().animate("walk_down", 10, -1);
-                        }
-                        if(!direction.x && !direction.y) {
-                            this.stop();
-                        }
-                })
-                .bind("FaceNewDirection",
-                        function (direction) {
-                            if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
-                            	this.faceDirection = DIRECTION.LEFT;
-                                if (!this.isPlaying("walk_left"))
-                                    this.stop().animate("walk_left", 10, 1);
-                            }
-                            if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
-                            	this.faceDirection = DIRECTION.RIGHT;
-                                if (!this.isPlaying("walk_right"))
-                                    this.stop().animate("walk_right", 10, 1);
-                            }
-                    })
-                // A rudimentary way to prevent the user from passing solid areas
-                .bind('Moved', function(from) {
-                    if(this.hit('solid')){
-                        this.attr({x: from.x, y:from.y});
-                    }
-                })
-//                .onHit("solid", function(hit) {
-//                    for (var i = 0; i < hit.length; i++) {
-//                        if (hit[i].normal.y !== 0) { // we hit the top or bottom of it
-//                            this._up = false;
-//                        }
-//
-//                        if (hit[i].normal.x === 1) { // we hit the right side of it
-//                            this.x = hit[i].obj.x + hit[i].obj.w;
-//                        }
-//
-//                        if (hit[i].normal.x === -1) { // we hit the left side of it
-//                            this.x = hit[i].obj.x - this.w;
-//                        }
-//                    }
-//                })
-                .onHit("fire", function() {
-                    this.destroy();
-                })
-                .bind("StartTurn", function (turnNum) {
-                    if (this.playerNum === turnNum) {
-                    	this.addComponent("RangedAttacker")
-//                    		.BombDropper()
-                    		.RangedAttacker()
-                    		.enableControl();
-                    }
-                })
-                .bind("EndTurn", function (turnNum) {
-                    if (this.playerNum === turnNum) {
-        	    		this.removeComponent("RangedAttacker")
-        	    			.unbind('MouseDown')
-        	    			.disableControl();
-                    }
-                });
+	                .collision()
+	                //change direction when a direction change event is received
+	                .bind("NewDirection",
+	                    function (direction) {
+	                        if (direction.x < 0) {
+	                        	this.faceDirection = DIRECTION.LEFT;
+	                            if (!this.isPlaying("walk_left"))
+	                                this.stop().animate("walk_left", 10, -1);
+	                        }
+	                        if (direction.x > 0) {
+	                        	this.faceDirection = DIRECTION.RIGHT;
+	                            if (!this.isPlaying("walk_right"))
+	                                this.stop().animate("walk_right", 10, -1);
+	                        }
+	                        if (direction.y < 0) {
+	                            if (!this.isPlaying("walk_up"))
+	                                this.stop().animate("walk_up", 10, -1);
+	                        }
+	                        if (direction.y > 0) {
+	                            if (!this.isPlaying("walk_down"))
+	                                this.stop().animate("walk_down", 10, -1);
+	                        }
+	                        if(!direction.x && !direction.y) {
+	                            this.stop();
+	                        }
+	                })
+	                .bind("FaceNewDirection",
+	                        function (direction) {
+	                            if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
+	                            	this.faceDirection = DIRECTION.LEFT;
+	                                if (!this.isPlaying("walk_left"))
+	                                    this.stop().animate("walk_left", 10, 1);
+	                            }
+	                            if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
+	                            	this.faceDirection = DIRECTION.RIGHT;
+	                                if (!this.isPlaying("walk_right"))
+	                                    this.stop().animate("walk_right", 10, 1);
+	                            }
+	                    })
+	                // A rudimentary way to prevent the user from passing solid areas
+	                .bind('Moved', function(from) {
+	                    if(this.hit('solid')){
+	                        this.attr({x: from.x, y:from.y});
+	                    }
+	                })
+	                .onHit("solid", function(hit) {
+	                    for (var i = 0; i < hit.length; i++) {
+	                        if (hit[i].normal.y !== 0) { // we hit the top or bottom of it
+	                            this._up = false;
+	                        }
+	
+	                        if (hit[i].normal.x === 1) { // we hit the right side of it
+	                            this.x = hit[i].obj.x + hit[i].obj.w;
+	                        }
+	
+	                        if (hit[i].normal.x === -1) { // we hit the left side of it
+	                            this.x = hit[i].obj.x - this.w;
+	                        }
+	                    }
+	                })
+	                .onHit("fire", function() {
+	                    this.destroy();
+	                })
+	                .bind("StartTurn", function (turnNum) {
+	                    if (this.playerNum === turnNum) {
+	                    	this.addComponent("RangedAttacker")
+	//                    		.BombDropper()
+	                    		.RangedAttacker()
+	                    		.enableControl();
+	                    }
+	                })
+	                .bind("EndTurn", function (turnNum) {
+	                    if (this.playerNum === turnNum) {
+	        	    		this.removeComponent("RangedAttacker")
+	        	    			.unbind('MouseDown')
+	        	    			.disableControl();
+	                    }
+	                });
             	
             return this;
         },
@@ -539,14 +561,35 @@ $(document).ready(function () {
         },
         
         // construct an equilateral triangle
-        SlingshotArrow: function(centerX, centerY, x, y, color) {
+        SlingshotArrow: function(centerX, centerY, x, y, color) {    		
         	var arrowSize = 20;
     		var slope = y / x;
     		var angle = Math.atan(slope);
+
+    		// calculation for rotating polygon
+    		// the rotation angle ends up being equivalent regardless of direction
+    		// need to compensate for this by re-doing the angle
+    		// sigh I'm bad, this can be avoided, but I messed up the points during the original calculation and since they are working there, I don't want to fix it
+    		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
+    		// but that will be later
+    		var rotationAngle;
+    		if(x > centerX && y < centerY) {
+    			rotationAngle = angle;
+    		}
+    		else if(x > centerX && y > centerY) {
+    			rotationAngle = -angle;
+    		}
+    		else if(x < centerX && y < centerY) {
+    			rotationAngle = angle + Math.PI / 2;
+    		}
+    		else if(x < centerX && y > centerY) {
+    			rotationAngle = -angle - Math.PI / 2;
+    		}
+    		
     		var point1 = [x, y - arrowSize * Math.sqrt(3) / 4];
     		var point2 = [x - arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
     		var point3 = [x + arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
-        	this.SolidPolygon([point1, point2, point3], color, angle, [x, y])
+        	this.SolidPolygon([point1, point2, point3], color, rotationAngle, [x, y])
         		.attr({ x: x, y: y });
             return this;
         }
@@ -578,7 +621,7 @@ $(document).ready(function () {
         addObstacles();
     	
         //create our player entity with some premade components
-        var player1 = Crafty.e("2D, DOM, Character, player, PlayerControl, RangedAttacker, Gravity")
+        var player1 = Crafty.e("2D, DOM, Character, player, PlayerControl, RangedAttacker, projectileAttacker, Gravity")
                 .attr({ x: 80, y: WINDOW_HEIGHT - GROUND_HEIGHT - 32, z: 1 })
                 .gravity("ground")
                 .PlayerControl(2, 4)
@@ -587,7 +630,7 @@ $(document).ready(function () {
                 .Character(1)
     			.enableControl();
         
-        var player2 = Crafty.e("2D, DOM, Character, player, PlayerControl, Gravity")
+        var player2 = Crafty.e("2D, DOM, Character, player, PlayerControl, lineOfSightAttacker, Gravity")
 		        .attr({ x: 912, y: 176, z: 1 })
 		        .gravity("ground")
                 .PlayerControl(2, 4)
@@ -621,17 +664,52 @@ $(document).ready(function () {
         		// tan a = y / x
         		// x = p cos a
         		// y = p cos a
-        		var angle = Math.atan(Math.abs(event.clientY - player.y) / Math.abs(event.clientX - player.x));
+        		var angle = Math.atan(Math.abs((event.clientY - player.y) / (event.clientX - player.x)));
         		var targetPoint = {
         				x: 100 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
-        				y: 100 * player.powerAmount * Math.sin(angle),
+        				y: 100 * player.powerAmount * Math.sin(angle) * (event.clientY < player.y ? -1 : 1),
         		};
         		
+        		// los attacks go until they hit something
+        		var targetPointInfinity = {
+        				x: 1000 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
+        				y: 1000 * player.powerAmount * Math.sin(angle) * (event.clientY < player.y ? -1 : 1),
+        		};
+        		
+        		// calculation for rotating sprite
+        		// the rotation angle ends up being equivalent regardless of direction
+        		// need to compensate for this by re-doing the angle
+        		// sigh I'm bad, this can be avoided, but I messed up the points during the original calculation and since they are working there, I don't want to fix it
+        		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
+        		// but that will be later
+        		var rotationAngle;
+        		if(player.faceDirection == DIRECTION.LEFT && event.clientY > player.y) {
+        			rotationAngle = angle;
+        		}
+        		else if(player.faceDirection == DIRECTION.LEFT && event.clientY < player.y) {
+        			rotationAngle = -angle;
+        		}
+        		else if(player.faceDirection == DIRECTION.RIGHT && event.clientY > player.y) {
+        			rotationAngle = angle + Math.PI / 2;
+        		}
+        		else if(player.faceDirection == DIRECTION.RIGHT && event.clientY < player.y) {
+        			rotationAngle = -angle - Math.PI / 2;
+        		}
+        		
         		player.isFiring = false;
-                var projectile = Crafty.e("2D, DOM, ExplodingProjectile, Gravity, Tween")
-    						            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10 })
-    					                .gravity("ground")
-    					                .tween({ x: player.x + targetPoint.x, y: player.y - targetPoint.y }, (6 - player.powerAmount) * 24);
+        		
+        		if(player.has("projectileAttacker")) {
+	                var projectile = Crafty.e("2D, DOM, ExplodingProjectile, Gravity, Tween")
+	    						            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10 })
+	    					                .gravity("ground")
+	    					                .tween({ x: player.x + targetPoint.x, y: player.y - targetPoint.y }, (6 - player.powerAmount) * 24);
+        		}
+        		else if(player.has("lineOfSightAttacker")) {
+	                var attack = Crafty.e("2D, DOM, LineOfSightAttack, Tween")
+								            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10, rotation: rotationAngle * 180 / Math.PI })
+							                .tween({ x: player.x + targetPointInfinity.x, y: player.y - targetPointInfinity.y }, (6 - player.powerAmount) * 120);
+        		}
+        		
         		player.powerAmount = 0;
         		Crafty.trigger("UpdatePower", player);
         		
