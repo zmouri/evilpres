@@ -31,8 +31,8 @@ $(document).ready(function () {
         grass4: [3, 0],
         flower: [0, 1],
         bush: [0, 2],
-        player: [0, 3],
-        enemy: [0, 3],
+        player_bman: [0, 3],
+        player_iman: [0, 4],
         projectile: [4, 0],
         lineofsight: [4, 1],
         empty: [4, 0],
@@ -373,10 +373,10 @@ $(document).ready(function () {
     			
                 //setup animations
                 this.requires("SpriteAnimation, Collision, solid, PlayerControl")
-	                .animate("walk_left", 6, 3, 8)
-	                .animate("walk_right", 9, 3, 11)
-	                .animate("walk_up", 3, 3, 5)
-	                .animate("walk_down", 0, 3, 2)
+	                .animate("walk_left", 6, this.playerNum + 2, 8)
+	                .animate("walk_right", 9, this.playerNum + 2, 11)
+	                .animate("walk_up", 3, this.playerNum + 2, 5)
+	                .animate("walk_down", 0, this.playerNum + 2, 2)
 	                .collision()
 	                //change direction when a direction change event is received
 	                .bind("NewDirection",
@@ -631,7 +631,7 @@ $(document).ready(function () {
         addObstacles();
     	
         //create our player entity with some premade components
-        var player1 = Crafty.e("2D, DOM, Character, player, PlayerControl, RangedAttacker, projectileAttacker, Gravity")
+        var player1 = Crafty.e("2D, DOM, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker, Gravity")
                 .attr({ x: 80, y: WINDOW_HEIGHT - GROUND_HEIGHT - 32, z: 1 })
                 .gravity("ground")
                 .PlayerControl(2, 4)
@@ -640,7 +640,7 @@ $(document).ready(function () {
                 .Character(1)
     			.enableControl();
         
-        var player2 = Crafty.e("2D, DOM, Character, player, PlayerControl, lineOfSightAttacker, Gravity")
+        var player2 = Crafty.e("2D, DOM, Character, player_iman, PlayerControl, lineOfSightAttacker, Gravity")
 		        .attr({ x: 912, y: 176, z: 1 })
 		        .gravity("ground")
                 .PlayerControl(2, 4)
