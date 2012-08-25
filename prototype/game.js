@@ -21,7 +21,7 @@ $(document).ready(function () {
 	//start crafty
 	Crafty.init(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Crafty.canvas.init();
-    Crafty.canvas._canvas.style.zIndex = '9000';
+    Crafty.canvas._canvas.style.zIndex = '2000';
 
     //turn the sprite map into usable components
     Crafty.sprite(16, IMG_SPRITE, {
@@ -88,17 +88,26 @@ $(document).ready(function () {
     
     //the loading screen that will display while our assets load
     Crafty.scene("loading", function () {
-        //load takes an array of assets and a callback when complete
-        Crafty.load([IMG_SPRITE, IMG_SKY], function () {
-            Crafty.scene("main"); //when everything is loaded, run the main scene
-            Crafty.e("Scroller");
+        $('#interface').hide();
+
+        //Bind click event on button
+        $('#startbutton').live('click',function() {
+        	$('#startscreen').fadeOut('slow', function() {
+                Crafty.scene("main"); //when everything is loaded, run the main scene
+                Crafty.e("Scroller");        		
+        	});
         });
 
-        //black background with some loading text
-        Crafty.background("#000");
-        Crafty.e("2D, DOM, Text").attr({ w: 100, h: 20, x: 150, y: 120 })
-                .text("Loading")
-                .css({ "text-align": "center" });
+        // loading text
+        var text = Crafty.e("2D, DOM, Text").attr({ w: 100, h: 20, x: WINDOW_WIDTH / 2 - 60, y: WINDOW_HEIGHT / 2 })
+		                .text("Loading")
+		                .css({ "text-align": "center" });
+        
+        //load takes an array of assets and a callback when complete
+        Crafty.load([IMG_SPRITE, IMG_SKY], function () {
+            $('#startscreen').show();
+            text.destroy();
+        });
     });
 
     //automatically play the loading scene
@@ -616,7 +625,8 @@ $(document).ready(function () {
             powerAmount: bars.power.find('.text'),
             turn: bars.turn.find('.text'),
         };
-        
+
+        $('#interface').show();
         generateWorld();
         addObstacles();
     	

@@ -6,16 +6,20 @@
     <script type="text/javascript" src="game.js"></script>
     <script type="text/javascript" src="level.js"></script>
     <title>Prototype Game</title>
-    <style>
-    body, html { margin:0; padding: 0; overflow:hidden; font-family:Arial; font-size:20px }
-    #cr-stage { border:2px solid black; margin:5px auto; color:white }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style/style.css" />
 </head>
 <body>
-    <div class="bars top">
-        <span id="power" >Power: <span class="text"></span></span>
-        <span id="padding" style="margin-left: 20px"></span>
-        <span id="turn" >Turn: <span class="text"></span></span>
+    <div id="cr-stage">
+	    <div id="interface">
+		    <div class="bars top">
+		        <span id="power" >Power: <span class="text"></span></span>
+		        <span id="padding" style="margin-left: 20px"></span>
+		        <span id="turn" >Turn: <span class="text"></span></span>
+		    </div>
+	    </div>
+	    <div id="startscreen">
+	         <div id="startbutton" class="button">Play Game!</div>
+	    </div>
     </div>
 </body>
 </html>
