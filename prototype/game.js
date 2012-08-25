@@ -2,6 +2,10 @@ $(document).ready(function () {
 	var IMG_SPRITE = "img/sprite_bman.png";
 	var IMG_SKY = "img/Sky_back_layer.png";
 	var IMG_EXPLOSION = "img/explosion.png";
+	var AUDIO_TITLE = "audio/title.mp3";
+	var AUDIO_PROJECTILE1 = "audio/projectile1.mp3";
+	var AUDIO_LINEOFSIGHT1 = "audio/lineofsight1.mp3";
+	var AUDIO_EXPLOSION1 = "audio/explosion1.mp3";
 	
 	var GROUND_HEIGHT = 100;
 	var EXPLOSION_RADIUS = 70;
@@ -37,6 +41,12 @@ $(document).ready(function () {
         lineofsight: [4, 1],
         empty: [4, 0],
     });
+    
+    // audio
+    Crafty.audio.add("title", AUDIO_TITLE);
+    Crafty.audio.add("projectile1", AUDIO_PROJECTILE1);
+    Crafty.audio.add("lineofsight1", AUDIO_LINEOFSIGHT1);
+    Crafty.audio.add("explosion1", AUDIO_EXPLOSION1);
 	
     function generateWorld() {
         //loop through all tiles
@@ -93,6 +103,7 @@ $(document).ready(function () {
         //Bind click event on button
         $('#startbutton').live('click',function() {
         	$('#startscreen').fadeOut('slow', function() {
+        		Crafty.audio.stop();
                 Crafty.scene("main"); //when everything is loaded, run the main scene
                 Crafty.e("Scroller");        		
         	});
@@ -105,6 +116,7 @@ $(document).ready(function () {
         
         //load takes an array of assets and a callback when complete
         Crafty.load([IMG_SPRITE, IMG_SKY], function () {
+        	Crafty.audio.play("title", -1, 0.5);
             $('#startscreen').show();
             text.destroy();
         });
@@ -169,10 +181,12 @@ $(document).ready(function () {
 
     Crafty.c('LineOfSightAttack', {
         init: function() {
+        	Crafty.audio.play("lineofsight1", -1);
             this.requires("2D, DOM, SpriteAnimation, Grid, lineofsight, solid, Collision, explodable")
                 .animate('fly', 4, 1, 6)
                 .animate('fly', 10, -1)
                 .timeout(function() {
+                	Crafty.audio.stop("lineofsight1");
                     this.trigger("explode");
                 }, 1000)
                 .bind('explode', function() {
@@ -189,10 +203,12 @@ $(document).ready(function () {
     
     Crafty.c('ExplodingProjectile', {
         init: function() {
+        	Crafty.audio.play("projectile1", -1);
             this.requires("2D, DOM, SpriteAnimation, Grid, projectile, solid, Collision, explodable")
                 .animate('fly', 4, 0, 6)
                 .animate('fly', 10, -1)
                 .timeout(function() {
+                	Crafty.audio.stop("projectile1");
                     this.trigger("explode");
                 }, 1000)
                 .bind('explode', function() {
@@ -218,6 +234,7 @@ $(document).ready(function () {
     
     Crafty.c('ProjectileExplosion', {
         init: function() {
+        	Crafty.audio.play("explosion1", -1);
         	var img = Crafty.e("2D, DOM, Image")
         					.image(IMG_EXPLOSION)
         					.attr({ x: -EXPLOSION_RADIUS, y: -EXPLOSION_RADIUS, z: 8000 });
@@ -232,6 +249,7 @@ $(document).ready(function () {
                 })
                 .timeout(function() {
                     this.destroy();
+                	Crafty.audio.stop("explosion1");
                 }, 2000);
         },
     });
