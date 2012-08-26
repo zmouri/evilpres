@@ -121,9 +121,6 @@ $(document).ready(function () {
             text.destroy();
         });
     });
-
-    //automatically play the loading scene
-    Crafty.scene("loading");
     
     Crafty.c('BombDropper', {
         _dropped: 0,
@@ -818,4 +815,12 @@ $(document).ready(function () {
 //    $(this).mousewheel(function(event, delta) {
 //    	Crafty.viewport.zoom(delta, 0, 0, 5);
 //    });
+    
+    $('#start').show();
+    $('#cr-stage').hide();
+	$('#start').click(function() {
+	    $(this).hide();
+	    $('#cr-stage').show();
+	    Crafty.scene("loading");
+	});
 });
