@@ -1,22 +1,15 @@
 function createBaseTile(x, y, z) {
-	var tile = Crafty.e("2D, DOM, Collision, solid, explodable, ground, grass" + Crafty.math.randomInt(1, 4))
+	return Crafty.e("2D, DOM, Collision, solid, explodable, ground, grass" + Crafty.math.randomInt(1, 4))
 	                .attr({ x: x, y: y, z: z, })
 	                .bind('explode', function() {
 	                    this.destroy();
 	                })
 	                .collision();
-	
-	if(tile.hit('explosion')) {
-		tile.destroy();
-	}
-	
-	return tile;
 }
 
 function createSurfaceTile(x, y, z) {
-	var tile;
 	if(Crafty.math.randomInt(1, 50) > 30) {
-    	tile = Crafty.e("2D, DOM, Collision, solid, explodable, ground, flower, SpriteAnimation")
+    	return Crafty.e("2D, DOM, Collision, solid, explodable, ground, flower, SpriteAnimation")
 			        .attr({ x: x, y: y, z: z, })
 		    		.animate('wind', 0, 1, 3)
 					.animate('wind', 80, -1)
@@ -26,7 +19,7 @@ function createSurfaceTile(x, y, z) {
 			        .collision();
 	}
 	else {
-    	tile = Crafty.e("2D, DOM, Collision, solid, explodable, ground, bush, SpriteAnimation")
+    	return Crafty.e("2D, DOM, Collision, solid, explodable, ground, bush, SpriteAnimation")
 			        .attr({ x: x, y: y, z: z, })
 					.animate('wind', 0, 2, 1)
 					.animate('wind', 80, -1)
@@ -35,12 +28,6 @@ function createSurfaceTile(x, y, z) {
 			        })
 			        .collision();
 	}
-
-	if(tile.hit('explosion')) {
-		tile.destroy();
-	}
-	
-	return tile;
 }
 
 function addObstacles() {
@@ -121,8 +108,9 @@ function addObstacles() {
 	createSurfaceTile(624, 272, 2);
 	
 	// mountain
-	createBaseTile(800, 96, 1);
-	createBaseTile(816, 96, 1);
+	var t = createBaseTile(800, 96, 1);
+	t.collision(new Crafty.polygon([800, 96], [816, 96], [800, 112], [816, 112])).addComponent("WiredHitBox");
+	createBaseTile(816, 96, 1).addComponent("WiredHitBox");
 
 	createBaseTile(768, 112, 1);
 	createBaseTile(784, 112, 1);

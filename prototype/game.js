@@ -7,6 +7,8 @@ $(document).ready(function () {
 	var AUDIO_LINEOFSIGHT1 = "audio/lineofsight1.mp3";
 	var AUDIO_EXPLOSION1 = "audio/explosion1.mp3";
 	
+	var GRAVITY = 10;
+	var PIXEL2METER_RATIO = 32;
 	var GROUND_HEIGHT = 100;
 	var EXPLOSION_RADIUS = 70;
 	var MAX_PLAYERS = 2;
@@ -26,6 +28,7 @@ $(document).ready(function () {
 	Crafty.init(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Crafty.canvas.init();
     Crafty.canvas._canvas.style.zIndex = '2000';
+    Crafty.box2D.init(0, GRAVITY, PIXEL2METER_RATIO, true);
 
     //turn the sprite map into usable components
     Crafty.sprite(16, IMG_SPRITE, {
@@ -291,91 +294,91 @@ $(document).ready(function () {
         }
     });
     
-    Crafty.c('AIControls', {
-        _move: 'down',
-        _directions: {0: 'left', 1:'right', 2: 'up', 3: 'down'},
-        _speed: 3,
-        _inShadow: false,
-
-        AIControls: function (speed) {
-            if (speed) this._speed = speed;
-
-            //functions to determine if there is a free path in some direction
-            var AIScope = this;
-            var pathTester = Crafty.e('2D, empty, Collision').attr({z:30000}).collision();
-            var PathTest = {
-                left: function() { pathTester.attr({x: AIScope.x-AIScope._speed, y: AIScope.y});
-                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
-                right: function() { pathTester.attr({x: AIScope.x+AIScope._speed, y: AIScope.y});
-                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
-                up: function() { pathTester.attr({x: AIScope.x, y: AIScope.y-AIScope._speed});
-                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
-                down: function() { pathTester.attr({x: AIScope.x, y: AIScope.y+AIScope._speed});
-                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
-                none: function() { return false; }
-            };
-
-            function bombWillHit() {
-                pathTester.attr({x: AIScope.x-1, y: AIScope.y});
-                if(pathTester.hit('flower')) { return true; }
-                pathTester.attr({x: AIScope.x+1, y: AIScope.y});
-                if(pathTester.hit('flower')) { return true; }
-                pathTester.attr({x: AIScope.x, y: AIScope.y-1});
-                if(pathTester.hit('flower')) { return true; }
-                pathTester.attr({x: AIScope.x, y: AIScope.y+1});
-                if(pathTester.hit('flower')) { return true; }
-                return false;
-            }
-
-            this.bind('enterframe', function() {
-                var nextDirection = '';
-                if(PathTest[this._move]())
-                {
-                    nextDirection = this._move;
-
-                    //when we are at a crossroad interesting things can happen
-                    if(this.x % 16 < this._speed && this.y % 16 < this._speed) {
-                        //change direction
-                        if(Crafty.math.randomInt(0, 2) === 0) {
-                            if(nextDirection === 'down' || nextDirection === 'up') {
-                                if(PathTest.left()) { nextDirection = 'left'; }
-                                else if(PathTest.right()) { nextDirection = 'right'; }
-                            }else{
-                                if(PathTest.up()) { nextDirection = 'up'; }
-                                else if(PathTest.down()) { nextDirection = 'down'; }
-                            }
-                        }
-                        if(bombWillHit() &&
-                                !this._inShadow) {
-                            this.trigger('Dropped');
-                        }
-                    }
-                }else{
-                    this.snap();
-                    nextDirection = this._directions[Crafty.math.randomInt(0,3)];
-                    if(nextDirection === this._move) {
-                        nextDirection = "none"; //we need to think
-                    }
-
-                }
-                this._move = nextDirection;
-
-                if(PathTest[this._move]()) {
-                    if (this._move == "right") this.x += this._speed;
-                    else if (this._move == "left") this.x -= this._speed;
-                    else if (this._move == "up") this.y -= this._speed;
-                    else if (this._move == "down") this.y += this._speed;
-                }
-            })
-            .onHit("ShadowBananaFire", function () {
-                this._inShadow = true;
-            }, function() {
-                this._inShadow = false;
-            });
-
-            return this;
-        }
-    });
+//    Crafty.c('AIControls', {
+//        _move: 'down',
+//        _directions: {0: 'left', 1:'right', 2: 'up', 3: 'down'},
+//        _speed: 3,
+//        _inShadow: false,
+//
+//        AIControls: function (speed) {
+//            if (speed) this._speed = speed;
+//
+//            //functions to determine if there is a free path in some direction
+//            var AIScope = this;
+//            var pathTester = Crafty.e('2D, empty, Collision').attr({z:30000}).collision();
+//            var PathTest = {
+//                left: function() { pathTester.attr({x: AIScope.x-AIScope._speed, y: AIScope.y});
+//                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
+//                right: function() { pathTester.attr({x: AIScope.x+AIScope._speed, y: AIScope.y});
+//                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
+//                up: function() { pathTester.attr({x: AIScope.x, y: AIScope.y-AIScope._speed});
+//                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
+//                down: function() { pathTester.attr({x: AIScope.x, y: AIScope.y+AIScope._speed});
+//                    return !(pathTester.hit('solid') || (!AIScope._inShadow && pathTester.hit('ShadowBananaFire')));},
+//                none: function() { return false; }
+//            };
+//
+//            function bombWillHit() {
+//                pathTester.attr({x: AIScope.x-1, y: AIScope.y});
+//                if(pathTester.hit('flower')) { return true; }
+//                pathTester.attr({x: AIScope.x+1, y: AIScope.y});
+//                if(pathTester.hit('flower')) { return true; }
+//                pathTester.attr({x: AIScope.x, y: AIScope.y-1});
+//                if(pathTester.hit('flower')) { return true; }
+//                pathTester.attr({x: AIScope.x, y: AIScope.y+1});
+//                if(pathTester.hit('flower')) { return true; }
+//                return false;
+//            }
+//
+//            this.bind('enterframe', function() {
+//                var nextDirection = '';
+//                if(PathTest[this._move]())
+//                {
+//                    nextDirection = this._move;
+//
+//                    //when we are at a crossroad interesting things can happen
+//                    if(this.x % 16 < this._speed && this.y % 16 < this._speed) {
+//                        //change direction
+//                        if(Crafty.math.randomInt(0, 2) === 0) {
+//                            if(nextDirection === 'down' || nextDirection === 'up') {
+//                                if(PathTest.left()) { nextDirection = 'left'; }
+//                                else if(PathTest.right()) { nextDirection = 'right'; }
+//                            }else{
+//                                if(PathTest.up()) { nextDirection = 'up'; }
+//                                else if(PathTest.down()) { nextDirection = 'down'; }
+//                            }
+//                        }
+//                        if(bombWillHit() &&
+//                                !this._inShadow) {
+//                            this.trigger('Dropped');
+//                        }
+//                    }
+//                }else{
+//                    this.snap();
+//                    nextDirection = this._directions[Crafty.math.randomInt(0,3)];
+//                    if(nextDirection === this._move) {
+//                        nextDirection = "none"; //we need to think
+//                    }
+//
+//                }
+//                this._move = nextDirection;
+//
+//                if(PathTest[this._move]()) {
+//                    if (this._move == "right") this.x += this._speed;
+//                    else if (this._move == "left") this.x -= this._speed;
+//                    else if (this._move == "up") this.y -= this._speed;
+//                    else if (this._move == "down") this.y += this._speed;
+//                }
+//            })
+//            .onHit("ShadowBananaFire", function () {
+//                this._inShadow = true;
+//            }, function() {
+//                this._inShadow = false;
+//            });
+//
+//            return this;
+//        }
+//    });
     
     Crafty.c('Character', {
     	isFiring: false,
@@ -387,12 +390,12 @@ $(document).ready(function () {
     			this.playerNum = num;
     			
                 //setup animations
-                this.requires("SpriteAnimation, Collision, solid, PlayerControl")
+                this.requires("SpriteAnimation, solid, PlayerControl")
 	                .animate("walk_left", 6, this.playerNum + 2, 8)
 	                .animate("walk_right", 9, this.playerNum + 2, 11)
 	                .animate("walk_up", 3, this.playerNum + 2, 5)
 	                .animate("walk_down", 0, this.playerNum + 2, 2)
-	                .collision()
+//	                .collision()
 	                //change direction when a direction change event is received
 	                .bind("NewDirection",
 	                    function (direction) {
@@ -432,42 +435,44 @@ $(document).ready(function () {
 	                            }
 	                    })
 	                // A rudimentary way to prevent the user from passing solid areas
-	                .bind('Moved', function(from) {
-	                    if(this.hit('solid')){
-	                        this.attr({x: from.x, y:from.y});
-	                    }
-	                })
-	                .onHit("solid", function(hit) {
-	                    for (var i = 0; i < hit.length; i++) {
-	                        if (hit[i].normal.y !== 0) { // we hit the top or bottom of it
-	                            this._up = false;
-	                        }
-	
-	                        if (hit[i].normal.x === 1) { // we hit the right side of it
-	                            this.x = hit[i].obj.x + hit[i].obj.w;
-	                        }
-	
-	                        if (hit[i].normal.x === -1) { // we hit the left side of it
-	                            this.x = hit[i].obj.x - this.w;
-	                        }
-	                    }
-	                })
-	                .onHit("fire", function() {
-	                    this.destroy();
-	                })
+//	                .bind('Moved', function(from) {
+//	                    if(this.hit('solid')){
+//	                        this.attr({x: from.x, y:from.y});
+//	                    }
+//	                })
+//	                .onHit("solid", function(hit) {
+//	                    for (var i = 0; i < hit.length; i++) {
+//	                        if (hit[i].normal.y !== 0) { // we hit the top or bottom of it
+//	                            this._up = false;
+//	                        }
+//	
+//	                        if (hit[i].normal.x === 1) { // we hit the right side of it
+//	                            this.x = hit[i].obj.x + hit[i].obj.w;
+//	                        }
+//	
+//	                        if (hit[i].normal.x === -1) { // we hit the left side of it
+//	                            this.x = hit[i].obj.x - this.w;
+//	                        }
+//	                    }
+//	                })
+//	                .onHit("fire", function() {
+//	                    this.destroy();
+//	                })
 	                .bind("StartTurn", function (turnNum) {
 	                    if (this.playerNum === turnNum) {
 	                    	this.addComponent("RangedAttacker")
 	//                    		.BombDropper()
-	                    		.RangedAttacker()
-	                    		.enableControl();
+	                    		.RangedAttacker();
+	                    	
+        	    			this.disableControls = false;
 	                    }
 	                })
 	                .bind("EndTurn", function (turnNum) {
 	                    if (this.playerNum === turnNum) {
 	        	    		this.removeComponent("RangedAttacker")
-	        	    			.unbind('MouseDown')
-	        	    			.disableControl();
+	        	    			.unbind('MouseDown');
+	        	    	    
+        	    			this.disableControls = true;
 	                    }
 	                });
             	
@@ -620,13 +625,44 @@ $(document).ready(function () {
     });
 
     Crafty.c("PlayerControl", {
+    	speed : 0,
+    	
         init: function() {
-            this.requires('Twoway');
+            this.requires('Keyboard');
         },
         
         PlayerControl: function(speed, jumpSpeed) {
-        	return this.twoway(speed, jumpSpeed);
-        }
+        	this.speed = speed;
+        	this.jumpSpeed = jumpSpeed;
+        	
+			this.bind("EnterFrame", function() {			
+				if (this.disableControls) {
+					return;
+				}
+				
+				var dx = 0;
+				var dy = 0;				
+				if (this.isDown("D")) {
+					//this.x += this.speed;
+					dx = this.speed;
+				}
+				if (this.isDown("A")) {
+					//this.x -= this.speed;
+					dx = -1 * this.speed;
+				}
+				if (this.isDown("W")) {
+					//this.y -= this.speed;
+					dy = -1 * this.jumpSpeed;
+				}
+
+				this.trigger('NewDirection', {x: dx, y: 0});
+				if(dx !== 0 || dy !== 0) {
+					return this.body.ApplyImpulse(new b2Vec2(dx/PIXEL2METER_RATIO, dy/PIXEL2METER_RATIO), this.body.GetWorldCenter());
+				}
+			});
+			
+			return this;
+        },
     });
     
     Crafty.scene("main", function () {
@@ -646,22 +682,38 @@ $(document).ready(function () {
         addObstacles();
     	
         //create our player entity with some premade components
-        var player1 = Crafty.e("2D, DOM, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker, Gravity")
-                .attr({ x: 80, y: WINDOW_HEIGHT - GROUND_HEIGHT - 32, z: 1 })
-                .gravity("ground")
+        var player1 = Crafty.e("2D, Canvas, Box2D, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker")
+                .attr({ x: 80, y: 0, z: 1 })
                 .PlayerControl(2, 4)
-//                .BombDropper()
                 .RangedAttacker()
+//                .BombDropper()
                 .Character(1)
-    			.enableControl();
+	            .box2d({
+	                    bodyType: 'dynamic',
+	                    density: 1});
         
-        var player2 = Crafty.e("2D, DOM, Character, player_iman, PlayerControl, lineOfSightAttacker, Gravity")
+        var player2 = Crafty.e("2D, Canvas, Box2D, Character, player_iman, PlayerControl, lineOfSightAttacker")
 		        .attr({ x: 912, y: 176, z: 1 })
-		        .gravity("ground")
                 .PlayerControl(2, 4)
 		        .Character(2)
-    			.disableControl();
-		
+	            .box2d({
+                    bodyType: 'dynamic',
+                    density: 1});
+        
+        // setup controls
+        player1.disableControls = false;
+        player2.disableControls = true;
+//        Crafty.trigger("StartTurn", currentTurn);	// todo this isn't working, not sure why
+
+        // floor
+        var floor = Crafty.e("2D, Canvas, Box2D")
+            .attr({ x: 0, y: 0})
+            .box2d({
+                bodyType: 'static',
+                shape: [[0, WINDOW_HEIGHT - GROUND_HEIGHT - 16], 
+                        [WINDOW_WIDTH, WINDOW_HEIGHT - GROUND_HEIGHT - 16]],
+            });
+        
         Crafty.bind("UpdatePower", function(player) {
         	info.powerAmount.text(player.powerAmount);
         });
