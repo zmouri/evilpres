@@ -1,34 +1,38 @@
+var IMG_SPRITE = "img/sprite_bman.png";
+var IMG_SKY = "img/Sky_back_layer.png";
+var IMG_EXPLOSION = "img/explosion.png";
+var AUDIO_TITLE = "audio/title.mp3";
+var AUDIO_PROJECTILE1 = "audio/projectile1.mp3";
+var AUDIO_LINEOFSIGHT1 = "audio/lineofsight1.mp3";
+var AUDIO_EXPLOSION1 = "audio/explosion1.mp3";
+
+//get the browser window size
+var WINDOW_HEIGHT = 400;	//$(window).height();
+var WINDOW_WIDTH = $(window).width();
+var GROUND_HEIGHT = 100;
+
+var MAX_SPEED = 2;
+var JUMP_FORCE = 800;
+var GRAVITY = 10;
+var PIXEL2METER_RATIO = 32;
+var EXPLOSION_RADIUS = 70;
+var MAX_PLAYERS = 2;
+
+var DIRECTION = {
+		LEFT : -1,
+		RIGHT: 1,
+};
+	
 $(document).ready(function () {
-	var IMG_SPRITE = "img/sprite_bman.png";
-	var IMG_SKY = "img/Sky_back_layer.png";
-	var IMG_EXPLOSION = "img/explosion.png";
-	var AUDIO_TITLE = "audio/title.mp3";
-	var AUDIO_PROJECTILE1 = "audio/projectile1.mp3";
-	var AUDIO_LINEOFSIGHT1 = "audio/lineofsight1.mp3";
-	var AUDIO_EXPLOSION1 = "audio/explosion1.mp3";
-	
-	var GRAVITY = 10;
-	var PIXEL2METER_RATIO = 32;
-	var GROUND_HEIGHT = 100;
-	var EXPLOSION_RADIUS = 70;
-	var MAX_PLAYERS = 2;
-	
-	var DIRECTION = {
-			LEFT : -1,
-			RIGHT: 1,
-	};
 	
 	var currentTurn = 1;
-	
-	// get the browser window size
-	var WINDOW_HEIGHT = 400;	//$(window).height();
-	var WINDOW_WIDTH = $(window).width();
 	
 	//start crafty
 	Crafty.init(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Crafty.canvas.init();
     Crafty.canvas._canvas.style.zIndex = '2000';
     Crafty.box2D.init(0, GRAVITY, PIXEL2METER_RATIO, true);
+//    Crafty.box2D.showDebugInfo();
 
     //turn the sprite map into usable components
     Crafty.sprite(16, IMG_SPRITE, {
@@ -66,6 +70,14 @@ $(document).ready(function () {
                 }
             }
         }
+        
+	    var floor = Crafty.e("2D, Canvas, Box2D")
+	        .attr({ x: 0, y: 0})
+	        .box2d({
+	            bodyType: 'static',
+	            shape: [[0, WINDOW_HEIGHT - GROUND_HEIGHT],
+	                    [WINDOW_WIDTH, WINDOW_HEIGHT - GROUND_HEIGHT]]
+	        });
     }
     
     function endTurn() {
@@ -387,54 +399,54 @@ $(document).ready(function () {
     	playerNum: 0,
     	
     	Character: function(num) {
-    			this.playerNum = num;
+			this.playerNum = num;
     			
                 //setup animations
-                this.requires("SpriteAnimation, solid, PlayerControl")
-	                .animate("walk_left", 6, this.playerNum + 2, 8)
-	                .animate("walk_right", 9, this.playerNum + 2, 11)
-	                .animate("walk_up", 3, this.playerNum + 2, 5)
-	                .animate("walk_down", 0, this.playerNum + 2, 2)
+            this.requires("SpriteAnimation, solid, PlayerControl, Box2D")
+                .animate("walk_left", 6, this.playerNum + 2, 8)
+                .animate("walk_right", 9, this.playerNum + 2, 11)
+                .animate("walk_up", 3, this.playerNum + 2, 5)
+                .animate("walk_down", 0, this.playerNum + 2, 2)
 //	                .collision()
-	                //change direction when a direction change event is received
-	                .bind("NewDirection",
-	                    function (direction) {
-	                        if (direction.x < 0) {
-	                        	this.faceDirection = DIRECTION.LEFT;
-	                            if (!this.isPlaying("walk_left"))
-	                                this.stop().animate("walk_left", 10, -1);
-	                        }
-	                        if (direction.x > 0) {
-	                        	this.faceDirection = DIRECTION.RIGHT;
-	                            if (!this.isPlaying("walk_right"))
-	                                this.stop().animate("walk_right", 10, -1);
-	                        }
-	                        if (direction.y < 0) {
-	                            if (!this.isPlaying("walk_up"))
-	                                this.stop().animate("walk_up", 10, -1);
-	                        }
-	                        if (direction.y > 0) {
-	                            if (!this.isPlaying("walk_down"))
-	                                this.stop().animate("walk_down", 10, -1);
-	                        }
-	                        if(!direction.x && !direction.y) {
-	                            this.stop();
-	                        }
-	                })
-	                .bind("FaceNewDirection",
-	                        function (direction) {
-	                            if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
-	                            	this.faceDirection = DIRECTION.LEFT;
-	                                if (!this.isPlaying("walk_left"))
-	                                    this.stop().animate("walk_left", 10, 1);
-	                            }
-	                            if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
-	                            	this.faceDirection = DIRECTION.RIGHT;
-	                                if (!this.isPlaying("walk_right"))
-	                                    this.stop().animate("walk_right", 10, 1);
-	                            }
-	                    })
-	                // A rudimentary way to prevent the user from passing solid areas
+                //change direction when a direction change event is received
+                .bind("NewDirection",
+                    function (direction) {
+                        if (direction.x < 0) {
+                        	this.faceDirection = DIRECTION.LEFT;
+                            if (!this.isPlaying("walk_left"))
+                                this.stop().animate("walk_left", 10, -1);
+                        }
+                        if (direction.x > 0) {
+                        	this.faceDirection = DIRECTION.RIGHT;
+                            if (!this.isPlaying("walk_right"))
+                                this.stop().animate("walk_right", 10, -1);
+                        }
+                        if (direction.y < 0) {
+                            if (!this.isPlaying("walk_up"))
+                                this.stop().animate("walk_up", 10, -1);
+                        }
+                        if (direction.y > 0) {
+                            if (!this.isPlaying("walk_down"))
+                                this.stop().animate("walk_down", 10, -1);
+                        }
+                        if(!direction.x && !direction.y) {
+                            this.stop();
+                        }
+                })
+                .bind("FaceNewDirection",
+                        function (direction) {
+                            if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
+                            	this.faceDirection = DIRECTION.LEFT;
+                                if (!this.isPlaying("walk_left"))
+                                    this.stop().animate("walk_left", 10, 1);
+                            }
+                            if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
+                            	this.faceDirection = DIRECTION.RIGHT;
+                                if (!this.isPlaying("walk_right"))
+                                    this.stop().animate("walk_right", 10, 1);
+                            }
+                    })
+                // A rudimentary way to prevent the user from passing solid areas
 //	                .bind('Moved', function(from) {
 //	                    if(this.hit('solid')){
 //	                        this.attr({x: from.x, y:from.y});
@@ -458,23 +470,23 @@ $(document).ready(function () {
 //	                .onHit("fire", function() {
 //	                    this.destroy();
 //	                })
-	                .bind("StartTurn", function (turnNum) {
-	                    if (this.playerNum === turnNum) {
-	                    	this.addComponent("RangedAttacker")
-	//                    		.BombDropper()
-	                    		.RangedAttacker();
-	                    	
-        	    			this.disableControls = false;
-	                    }
-	                })
-	                .bind("EndTurn", function (turnNum) {
-	                    if (this.playerNum === turnNum) {
-	        	    		this.removeComponent("RangedAttacker")
-	        	    			.unbind('MouseDown');
-	        	    	    
-        	    			this.disableControls = true;
-	                    }
-	                });
+                .bind("StartTurn", function (turnNum) {
+                    if (this.playerNum === turnNum) {
+                    	this.addComponent("RangedAttacker")
+//                    		.BombDropper()
+                    		.RangedAttacker();
+                    	
+    	    			this.disableControls = false;
+                    }
+                })
+                .bind("EndTurn", function (turnNum) {
+                    if (this.playerNum === turnNum) {
+        	    		this.removeComponent("RangedAttacker")
+        	    			.unbind('MouseDown');
+        	    	    
+    	    			this.disableControls = true;
+                    }
+                });
             	
             return this;
         },
@@ -601,6 +613,7 @@ $(document).ready(function () {
     		// sigh I'm bad, this can be avoided, but I messed up the points during the original calculation and since they are working there, I don't want to fix it
     		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
     		// but that will be later
+    		// TODO fix this to use box2d
     		var rotationAngle;
     		if(x > centerX && y < centerY) {
     			rotationAngle = angle;
@@ -624,9 +637,7 @@ $(document).ready(function () {
         }
     });
 
-    Crafty.c("PlayerControl", {
-    	speed : 0,
-    	
+    Crafty.c("PlayerControl", {    	
         init: function() {
             this.requires('Keyboard');
         },
@@ -634,28 +645,37 @@ $(document).ready(function () {
         PlayerControl: function(speed, jumpSpeed) {
         	this.speed = speed;
         	this.jumpSpeed = jumpSpeed;
-        	
-			this.bind("EnterFrame", function() {			
+			this.isJumping = false;
+
+			this.bind("EnterFrame", function() {
 				if (this.disableControls) {
 					return;
 				}
+
 				
 				var dx = 0;
 				var dy = 0;				
 				if (this.isDown("D")) {
-					//this.x += this.speed;
-					dx = this.speed;
+					this.trigger('NewDirection', {x: DIRECTION.RIGHT, y: 0});
+					if(this.body.GetLinearVelocity().x < MAX_SPEED) {
+						dx = this.speed;						
+					}
 				}
-				if (this.isDown("A")) {
-					//this.x -= this.speed;
-					dx = -1 * this.speed;
+				else if (this.isDown("A")) {
+					this.trigger('NewDirection', {x: DIRECTION.LEFT, y: 0});
+					if(this.body.GetLinearVelocity().x > -1 * MAX_SPEED) {
+						dx = -1 * this.speed;
+					}
 				}
-				if (this.isDown("W")) {
-					//this.y -= this.speed;
-					dy = -1 * this.jumpSpeed;
+				else {
+					this.trigger('NewDirection', {x: 0, y: 0});
+				}
+				
+				// can't jump unless vertical linear velocity is 0
+				if (this.body.GetLinearVelocity().y === 0 && this.isDown("W")) {
+					dy = this.body.GetMass() * JUMP_FORCE;
 				}
 
-				this.trigger('NewDirection', {x: dx, y: 0});
 				if(dx !== 0 || dy !== 0) {
 					return this.body.ApplyImpulse(new b2Vec2(dx/PIXEL2METER_RATIO, dy/PIXEL2METER_RATIO), this.body.GetWorldCenter());
 				}
@@ -684,35 +704,29 @@ $(document).ready(function () {
         //create our player entity with some premade components
         var player1 = Crafty.e("2D, Canvas, Box2D, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker")
                 .attr({ x: 80, y: 0, z: 1 })
-                .PlayerControl(2, 4)
+                .PlayerControl(2, 20)
                 .RangedAttacker()
 //                .BombDropper()
                 .Character(1)
 	            .box2d({
-	                    bodyType: 'dynamic',
-	                    density: 1});
+                    bodyType: 'dynamic',
+                    density: 1});
         
         var player2 = Crafty.e("2D, Canvas, Box2D, Character, player_iman, PlayerControl, lineOfSightAttacker")
-		        .attr({ x: 912, y: 176, z: 1 })
+		        .attr({ x: 800, y: 0, z: 1 })
                 .PlayerControl(2, 4)
 		        .Character(2)
 	            .box2d({
                     bodyType: 'dynamic',
                     density: 1});
         
+        player1.body.SetFixedRotation(true);
+        player2.body.SetFixedRotation(true);
+        
         // setup controls
         player1.disableControls = false;
         player2.disableControls = true;
 //        Crafty.trigger("StartTurn", currentTurn);	// todo this isn't working, not sure why
-
-        // floor
-        var floor = Crafty.e("2D, Canvas, Box2D")
-            .attr({ x: 0, y: 0})
-            .box2d({
-                bodyType: 'static',
-                shape: [[0, WINDOW_HEIGHT - GROUND_HEIGHT - 16], 
-                        [WINDOW_WIDTH, WINDOW_HEIGHT - GROUND_HEIGHT - 16]],
-            });
         
         Crafty.bind("UpdatePower", function(player) {
         	info.powerAmount.text(player.powerAmount);
@@ -759,6 +773,7 @@ $(document).ready(function () {
         		// sigh I'm bad, this can be avoided, but I messed up the points during the original calculation and since they are working there, I don't want to fix it
         		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
         		// but that will be later
+        		// TODO fix this to use box2d
         		var rotationAngle;
         		if(player.faceDirection == DIRECTION.LEFT && event.clientY > player.y) {
         			rotationAngle = angle;
@@ -851,10 +866,10 @@ $(document).ready(function () {
 
         		// if the mouse is behind the character, swivel
         		if(event.clientX > player.x) {
-        			Crafty.trigger("FaceNewDirection", -1);
+        			player.trigger("FaceNewDirection", -1);
         		}
         		else {
-        			Crafty.trigger("FaceNewDirection", 1);
+        			player.trigger("FaceNewDirection", 1);
         		}
         	}
         });
