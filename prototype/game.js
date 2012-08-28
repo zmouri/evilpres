@@ -30,7 +30,7 @@ $(document).ready(function () {
 	//start crafty
 	Crafty.init(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Crafty.canvas.init();
-    Crafty.canvas._canvas.style.zIndex = '2000';
+    Crafty.canvas._canvas.style.zIndex = '3000';
     Crafty.box2D.init(0, GRAVITY, PIXEL2METER_RATIO, true);
 //    Crafty.box2D.showDebugInfo();
 
@@ -71,7 +71,7 @@ $(document).ready(function () {
             }
         }
         
-	    var floor = Crafty.e("2D, Canvas, Box2D")
+	    var floor = Crafty.e("2D, DOM, Box2D")
 	        .attr({ x: 0, y: 0})
 	        .box2d({
 	            bodyType: 'static',
@@ -192,11 +192,16 @@ $(document).ready(function () {
     });
 
     Crafty.c('LineOfSightAttack', {
-        init: function() {
+    	LineOfSightAttack: function(graphic) {
         	Crafty.audio.play("lineofsight1", -1);
-            this.requires("2D, DOM, SpriteAnimation, Grid, lineofsight, solid, Collision, explodable")
+            this.requires("2D, DOM, Box2D, SpriteAnimation, explodable, " + graphic)
                 .animate('fly', 4, 1, 6)
                 .animate('fly', 10, -1)
+                .box2d({
+                	bodyType: 'dynamic',
+                	density: 25,
+                	restitution: 0,
+                })
                 .timeout(function() {
                 	Crafty.audio.stop("lineofsight1");
                     this.trigger("explode");
@@ -208,17 +213,32 @@ $(document).ready(function () {
                     
                     // remove projectile
                     this.destroy();
-                })
-                .collision();
+                });
+
+			this.bind("EnterFrame", function() {
+				this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
+			});
+			
+			return this;
         },
+        
+        Attack: function(power, angle) {
+            this.body.SetBullet(true);
+            return this.body.ApplyImpulse(new b2Vec2(power * Math.cos(angle), power * Math.sin(angle)), this.body.GetWorldCenter());
+        }
     });
     
-    Crafty.c('ExplodingProjectile', {
-        init: function() {
+    Crafty.c('ExplodingProjectile', {        
+        ExplodingProjectile: function(graphic) {
         	Crafty.audio.play("projectile1", -1);
-            this.requires("2D, DOM, SpriteAnimation, Grid, projectile, solid, Collision, explodable")
+            this.requires("2D, DOM, Box2D, SpriteAnimation, explodable, " + graphic)
                 .animate('fly', 4, 0, 6)
                 .animate('fly', 10, -1)
+                .box2d({
+                	bodyType: 'dynamic',
+                	density: 25,
+                	restitution: 1,
+                })
                 .timeout(function() {
                 	Crafty.audio.stop("projectile1");
                     this.trigger("explode");
@@ -230,9 +250,14 @@ $(document).ready(function () {
                     
                     // remove projectile
                     this.destroy();
-                })
-                .collision();
+                });
+            
+            return this;
         },
+        
+        Attack: function(power, angle) {
+            return this.body.ApplyImpulse(new b2Vec2(power * Math.cos(angle), power * Math.sin(angle)), this.body.GetWorldCenter());
+        }
 //
 //        BananaBomb: function() {
 //            //Create shadow fire to help the AI
@@ -251,7 +276,7 @@ $(document).ready(function () {
         					.image(IMG_EXPLOSION)
         					.attr({ x: -EXPLOSION_RADIUS, y: -EXPLOSION_RADIUS, z: 8000 });
         	
-            this.requires("2D, DOM, Collision, fire, explosion")
+            this.requires("2D, Canvas, Collision, fire, explosion")
 				.attach(img)
     			.collision(new Crafty.circle(0, 0, EXPLOSION_RADIUS))
                 .onHit('explodable', function(o) {
@@ -402,11 +427,15 @@ $(document).ready(function () {
 			this.playerNum = num;
     			
                 //setup animations
-            this.requires("SpriteAnimation, solid, PlayerControl, Box2D")
+            this.requires("SpriteAnimation, PlayerControl, Box2D")
                 .animate("walk_left", 6, this.playerNum + 2, 8)
                 .animate("walk_right", 9, this.playerNum + 2, 11)
                 .animate("walk_up", 3, this.playerNum + 2, 5)
                 .animate("walk_down", 0, this.playerNum + 2, 2)
+                .box2d({
+                	bodyType: 'dynamic',
+                	density: 1
+                })
 //	                .collision()
                 //change direction when a direction change event is received
                 .bind("NewDirection",
@@ -702,23 +731,17 @@ $(document).ready(function () {
         addObstacles();
     	
         //create our player entity with some premade components
-        var player1 = Crafty.e("2D, Canvas, Box2D, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker")
+        var player1 = Crafty.e("2D, DOM, Box2D, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker")
                 .attr({ x: 80, y: 0, z: 1 })
                 .PlayerControl(2, 20)
                 .RangedAttacker()
 //                .BombDropper()
-                .Character(1)
-	            .box2d({
-                    bodyType: 'dynamic',
-                    density: 1});
+                .Character(1);
         
-        var player2 = Crafty.e("2D, Canvas, Box2D, Character, player_iman, PlayerControl, lineOfSightAttacker")
+        var player2 = Crafty.e("2D, DOM, Box2D, Character, player_iman, PlayerControl, lineOfSightAttacker")
 		        .attr({ x: 800, y: 0, z: 1 })
                 .PlayerControl(2, 4)
-		        .Character(2)
-	            .box2d({
-                    bodyType: 'dynamic',
-                    density: 1});
+		        .Character(2);
         
         player1.body.SetFixedRotation(true);
         player2.body.SetFixedRotation(true);
@@ -749,17 +772,19 @@ $(document).ready(function () {
         Crafty.bind("FireProjectile", function(args) {
         	var event = args[0];
         	var player = args[1];
+    		var translatedPosition = Crafty.DOM.translate(event.clientX, event.clientY);
         	
         	if(player.isFiring && player.powerAmount > 0) {
         		// calculate the angle that the mouse was released, and use that to calculate the target trajectory
         		// tan a = y / x
         		// x = p cos a
         		// y = p cos a
+//        		var angle = (Math.atan2(translatedPosition.y - player.y, translatedPosition.x - player.x) * (180 / Math.PI));
         		var angle = Math.atan(Math.abs((event.clientY - player.y) / (event.clientX - player.x)));
-        		var targetPoint = {
-        				x: 100 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
-        				y: 100 * player.powerAmount * Math.sin(angle) * (event.clientY < player.y ? -1 : 1),
-        		};
+//        		var targetPoint = {
+//        				x: 100 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
+//        				y: 100 * player.powerAmount * Math.sin(angle) * (event.clientY < player.y ? -1 : 1),
+//        		};
         		
         		// los attacks go until they hit something
         		var targetPointInfinity = {
@@ -774,32 +799,35 @@ $(document).ready(function () {
         		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
         		// but that will be later
         		// TODO fix this to use box2d
+                var translatedAngle = Math.atan2(player.y - translatedPosition.y, player.x - translatedPosition.x);	// multiply by -1 because the angle is actually the opposite (DOM based on upper left origin)
         		var rotationAngle;
-        		if(player.faceDirection == DIRECTION.LEFT && event.clientY > player.y) {
-        			rotationAngle = angle;
+        		if(player.faceDirection == DIRECTION.RIGHT && translatedPosition.y > player.y) {
+        			rotationAngle = -1 * translatedAngle;
         		}
-        		else if(player.faceDirection == DIRECTION.LEFT && event.clientY < player.y) {
-        			rotationAngle = -angle;
+        		else if(player.faceDirection == DIRECTION.RIGHT && translatedPosition.y < player.y) {
+        			rotationAngle = translatedAngle;
         		}
-        		else if(player.faceDirection == DIRECTION.RIGHT && event.clientY > player.y) {
-        			rotationAngle = angle + Math.PI / 2;
+        		else if(player.faceDirection == DIRECTION.LEFT && translatedPosition.y > player.y) {
+        			rotationAngle = -1 * translatedAngle + Math.PI / 2;
         		}
-        		else if(player.faceDirection == DIRECTION.RIGHT && event.clientY < player.y) {
-        			rotationAngle = -angle - Math.PI / 2;
+        		else if(player.faceDirection == DIRECTION.LEFT && translatedPosition.y < player.y) {
+        			rotationAngle = translatedAngle - Math.PI / 2;
         		}
         		
         		player.isFiring = false;
-        		
         		if(player.has("projectileAttacker")) {
-	                var projectile = Crafty.e("2D, DOM, ExplodingProjectile, Gravity, Tween")
-	    						            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10 })
-	    					                .gravity("ground")
-	    					                .tween({ x: player.x + targetPoint.x, y: player.y - targetPoint.y }, (6 - player.powerAmount) * 24);
+	                var projectile = Crafty.e("2D, DOM, Box2D, ExplodingProjectile")
+	    						            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
+	    						            .ExplodingProjectile("projectile");
+
+	                projectile.Attack(20 * player.powerAmount, rotationAngle);
         		}
         		else if(player.has("lineOfSightAttacker")) {
-	                var attack = Crafty.e("2D, DOM, LineOfSightAttack, Tween")
-								            .attr({ x: player.x, y: player.y, z: player.z, xspeed: 10, rotation: rotationAngle * 180 / Math.PI })
-							                .tween({ x: player.x + targetPointInfinity.x, y: player.y - targetPointInfinity.y }, (6 - player.powerAmount) * 120);
+	                var los = Crafty.e("2D, DOM, Box2D, LineOfSightAttack")
+								            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
+	    						            .LineOfSightAttack("lineofsight");
+
+	                los.Attack(20 * player.powerAmount, rotationAngle);
         		}
         		
         		player.powerAmount = 0;
@@ -812,6 +840,7 @@ $(document).ready(function () {
             	
             	// remove slingshot
         		Crafty("Slingshot").destroy();
+        		Crafty("Canvas").destroy();
         		
         		// end current turn
                 endTurn();
@@ -821,6 +850,7 @@ $(document).ready(function () {
         Crafty.bind("CheckFiring", function(args) {
         	var event = args[0];
         	var player = args[1];
+    		var translatedPosition = Crafty.DOM.translate(event.clientX, event.clientY);
         	
         	if(player.isFiring) {
         		// calculate distance between mouse cursor and player
@@ -853,14 +883,13 @@ $(document).ready(function () {
 	        			intensity = "#bb0033";
         		}
 
+
         		// remove any existing slingshots and draw a new one
         		Crafty("Slingshot").destroy();
         		Crafty.e("Slingshot")
     	    		.Slingshot(player.x, player.y, distance, intensity)
-    	    		.attach(Crafty.e("SlingshotAnchor")
-    	    					.SlingshotAnchor(event.clientX, event.clientY, intensity))
-    	    		.attach(Crafty.e("SlingshotArrow")
-	    					.SlingshotArrow(player.x, player.y, 2 * player.x - event.clientX, 2 * player.y - event.clientY, distance, intensity));
+    	    		.attach(Crafty.e("SlingshotAnchor").SlingshotAnchor(event.clientX, event.clientY, intensity))
+    	    		.attach(Crafty.e("SlingshotArrow").SlingshotArrow(player.x, player.y, 2 * player.x - event.clientX, 2 * player.y - event.clientY, distance, intensity));
             	
         		Crafty.trigger("UpdatePower", player);
 

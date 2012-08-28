@@ -32,7 +32,7 @@ function createSurfaceTile(x, y, z) {
 
 function addObstacles() {    
 	// bump1
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -66,7 +66,7 @@ function addObstacles() {
 	createSurfaceTile(224, 288, 2);
 	createSurfaceTile(240, 288, 2);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -84,7 +84,7 @@ function addObstacles() {
 	createSurfaceTile(192, 272, 2);
 	createSurfaceTile(208, 272, 2);
 	
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -97,7 +97,7 @@ function addObstacles() {
 	createSurfaceTile(176, 256, 2);
 
 	// bump2
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -121,7 +121,7 @@ function addObstacles() {
 	createSurfaceTile(560, 288, 2);
 	createSurfaceTile(640, 288, 2);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -138,7 +138,7 @@ function addObstacles() {
 	createSurfaceTile(624, 272, 2);	
 	
 	// mountain
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -148,7 +148,7 @@ function addObstacles() {
 	createBaseTile(800, 96, 1);
 	createBaseTile(816, 96, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -161,7 +161,7 @@ function addObstacles() {
 	createBaseTile(816, 112, 1);
 	createBaseTile(832, 112, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -176,7 +176,7 @@ function addObstacles() {
 	createBaseTile(832, 128, 1);
 	createBaseTile(848, 128, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -188,7 +188,7 @@ function addObstacles() {
 	createBaseTile(848, 144, 1);
 	createBaseTile(864, 144, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -202,7 +202,7 @@ function addObstacles() {
 	createBaseTile(864, 160, 1);
 	createBaseTile(880, 160, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -216,7 +216,7 @@ function addObstacles() {
 	createBaseTile(880, 176, 1);
 	createBaseTile(896, 176, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -231,7 +231,7 @@ function addObstacles() {
 	createBaseTile(896, 192, 1);
 	createBaseTile(912, 192, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -246,7 +246,7 @@ function addObstacles() {
 	createBaseTile(912, 208, 1);
 	createBaseTile(928, 208, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -262,7 +262,7 @@ function addObstacles() {
 	createBaseTile(928, 224, 1);
 	createBaseTile(944, 224, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -278,7 +278,7 @@ function addObstacles() {
 	createBaseTile(944, 240, 1);
 	createBaseTile(960, 240, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -295,7 +295,7 @@ function addObstacles() {
 	createBaseTile(960, 256, 1);
 	createBaseTile(976, 256, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',
@@ -312,7 +312,7 @@ function addObstacles() {
 	createBaseTile(976, 272, 1);
 	createBaseTile(992, 272, 1);
 
-    Crafty.e("2D, Canvas, Box2D")
+    Crafty.e("2D, DOM, Box2D")
 		.attr({x: 0, y: 0})
 	    .box2d({
 	        bodyType: 'static',

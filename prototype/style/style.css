@@ -33,7 +33,7 @@ html {
 
 #startscreen {
 	background-image: url('../img/versus_screen.png');
-    z-index: 3000;
+    z-index: 4000;
 }
 
 .button {
