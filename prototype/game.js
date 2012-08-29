@@ -49,6 +49,10 @@ $(document).ready(function () {
         empty: [4, 0],
     });
     
+    Crafty.sprite(128, IMG_EXPLOSION, {
+        explosion: [0, 0],
+    });
+    
     // audio
     Crafty.audio.add("title", AUDIO_TITLE);
     Crafty.audio.add("projectile1", AUDIO_PROJECTILE1);
@@ -71,7 +75,7 @@ $(document).ready(function () {
             }
         }
         
-	    var floor = Crafty.e("2D, DOM, Box2D")
+	    var floor = Crafty.e("2D, DOM, Box2D, ground")
 	        .attr({ x: 0, y: 0})
 	        .box2d({
 	            bodyType: 'static',
@@ -144,10 +148,9 @@ $(document).ready(function () {
 
         BombDropper: function() {
             var dropper = this;
-            this.requires('Grid')
-
+            
             //Create the bomb
-            .bind('KeyDown', function(e) {
+            this.bind('KeyDown', function(e) {
                 if (e.key !== this._key) {
                     return;
                 }
@@ -199,25 +202,34 @@ $(document).ready(function () {
                 .animate('fly', 10, -1)
                 .box2d({
                 	bodyType: 'dynamic',
-                	density: 25,
-                	restitution: 0,
+                	density: 30,
+                	restitution: 0.1,
                 })
-                .timeout(function() {
-                	Crafty.audio.stop("lineofsight1");
+   			 	.onContact("ground", function(data){
+		 			console.log("hit ground");
+		 			this.trigger("explode");
+   			 	})
+   			 	.onContact("player", function(data){
+		 			console.log("hit player");
+		 			this.trigger("explode");
+   			 	})
+                .timeout(function() {	// TODO change this from timeout to if it goes too far away
                     this.trigger("explode");
-                }, 1000)
+                }, 5000)
                 .bind('explode', function() {
+                	Crafty.audio.stop("lineofsight1");
+                	
                     // create explosion
-                    Crafty.e("ProjectileExplosion")
-                    	.attr({ x: this.x, y: this.y, z: 8000 });
+                    Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
+            			.attr({x: this.x, y: this.y, z: 4})
+                    	.Explode("explosion");
                     
                     // remove projectile
                     this.destroy();
+                })
+                .bind("EnterFrame", function() {
+                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
                 });
-
-			this.bind("EnterFrame", function() {
-				this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
-			});
 			
 			return this;
         },
@@ -236,17 +248,19 @@ $(document).ready(function () {
                 .animate('fly', 10, -1)
                 .box2d({
                 	bodyType: 'dynamic',
-                	density: 25,
-                	restitution: 1,
+                	density: 50,
+                	restitution: 0.8,
                 })
                 .timeout(function() {
-                	Crafty.audio.stop("projectile1");
                     this.trigger("explode");
                 }, 1000)
                 .bind('explode', function() {
+                	Crafty.audio.stop("projectile1");
+                	
                     // create explosion
-                    Crafty.e("ProjectileExplosion")
-                    	.attr({ x: this.x, y: this.y, z: 8000 });
+                    Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
+            			.attr({x: this.x, y: this.y, z: 4})
+                    	.Explode("explosion");
                     
                     // remove projectile
                     this.destroy();
@@ -255,7 +269,7 @@ $(document).ready(function () {
             return this;
         },
         
-        Attack: function(power, angle) {
+        Throw: function(power, angle) {
             return this.body.ApplyImpulse(new b2Vec2(power * Math.cos(angle), power * Math.sin(angle)), this.body.GetWorldCenter());
         }
 //
@@ -270,24 +284,52 @@ $(document).ready(function () {
     });
     
     Crafty.c('ProjectileExplosion', {
-        init: function() {
+        Explode: function(graphic) {
         	Crafty.audio.play("explosion1", -1);
-        	var img = Crafty.e("2D, DOM, Image")
-        					.image(IMG_EXPLOSION)
-        					.attr({ x: -EXPLOSION_RADIUS, y: -EXPLOSION_RADIUS, z: 8000 });
+//        	var img = Crafty.e("2D, DOM, Image")
+//        					.image(IMG_EXPLOSION)
+//        					.attr({ x: x - EXPLOSION_RADIUS, y: y - EXPLOSION_RADIUS, z: z });
         	
-            this.requires("2D, Canvas, Collision, fire, explosion")
-				.attach(img)
-    			.collision(new Crafty.circle(0, 0, EXPLOSION_RADIUS))
+            this.requires("2D, DOM, Box2D, Collision, " + graphic)
+//				.attr({ x: x, y: y, z: z })
+//				.attach(img)
+                .box2d({
+                	density: 0.1,
+            		bodyType: 'static',
+//            		shape: 'circle',
+                })
+    			.collision()
+//                .onContact('explodable', function(o) {
+//                	console.log('contact explodable');
+//                    for(var i = 0; i < o.length; i++) {
+//                        o[i].obj.trigger("explode");
+//                    }
+//                })
                 .onHit('explodable', function(o) {
+                	console.log('hit explodable');
                     for(var i = 0; i < o.length; i++) {
                         o[i].obj.trigger("explode");
                     }
                 })
+                .onHit('player', function(o) {
+                	console.log('hit player');
+                    for(var i = 0; i < o.length; i++) {
+                        o[i].obj.trigger("damage");
+                    }
+                })
                 .timeout(function() {
-                    this.destroy();
                 	Crafty.audio.stop("explosion1");
-                }, 2000);
+                	
+                    this.destroy();
+                }, 2000)
+                .bind("EnterFrame", function() {
+                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
+                });
+            
+            this.body.SetFixedRotation(true);
+//            this.fixtures[0].m_shape.SetRadius(EXPLOSION_RADIUS);
+            
+            return this;
         },
     });
     
@@ -303,33 +345,33 @@ $(document).ready(function () {
 //        }
 //    });
     
-    Crafty.c('Grid', {
-        _cellSize: 16,
-        Grid: function(cellSize) {
-            if(cellSize) this._cellSize = cellSize;
-            return this;
-        },
-        col: function(col) {
-            if(arguments.length === 1) {
-                this.x = this._cellSize * col;
-                return this;
-            } else {
-                return Math.round(this.x / this._cellSize);
-            }
-        },
-        row: function(row) {
-            if(arguments.length === 1) {
-                this.y = this._cellSize * row;
-                return this;
-            } else {
-                return Math.round(this.y / this._cellSize);
-            }
-        },      
-        snap: function(){
-            this.x = Math.round(this.x/this._cellSize) * this._cellSize;
-            this.y = Math.round(this.y/this._cellSize) * this._cellSize;
-        }
-    });
+//    Crafty.c('Grid', {
+//        _cellSize: 16,
+//        Grid: function(cellSize) {
+//            if(cellSize) this._cellSize = cellSize;
+//            return this;
+//        },
+//        col: function(col) {
+//            if(arguments.length === 1) {
+//                this.x = this._cellSize * col;
+//                return this;
+//            } else {
+//                return Math.round(this.x / this._cellSize);
+//            }
+//        },
+//        row: function(row) {
+//            if(arguments.length === 1) {
+//                this.y = this._cellSize * row;
+//                return this;
+//            } else {
+//                return Math.round(this.y / this._cellSize);
+//            }
+//        },      
+//        snap: function(){
+//            this.x = Math.round(this.x/this._cellSize) * this._cellSize;
+//            this.y = Math.round(this.y/this._cellSize) * this._cellSize;
+//        }
+//    });
     
 //    Crafty.c('AIControls', {
 //        _move: 'down',
@@ -631,36 +673,13 @@ $(document).ready(function () {
         },
         
         // construct an equilateral triangle
-        SlingshotArrow: function(centerX, centerY, x, y, color) {    		
+        SlingshotArrow: function(x, y, angle, color) {    		
         	var arrowSize = 20;
-    		var slope = y / x;
-    		var angle = Math.atan(slope);
 
-    		// calculation for rotating polygon
-    		// the rotation angle ends up being equivalent regardless of direction
-    		// need to compensate for this by re-doing the angle
-    		// sigh I'm bad, this can be avoided, but I messed up the points during the original calculation and since they are working there, I don't want to fix it
-    		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
-    		// but that will be later
-    		// TODO fix this to use box2d
-    		var rotationAngle;
-    		if(x > centerX && y < centerY) {
-    			rotationAngle = angle;
-    		}
-    		else if(x > centerX && y > centerY) {
-    			rotationAngle = -angle;
-    		}
-    		else if(x < centerX && y < centerY) {
-    			rotationAngle = angle + Math.PI / 2;
-    		}
-    		else if(x < centerX && y > centerY) {
-    			rotationAngle = -angle - Math.PI / 2;
-    		}
-    		
     		var point1 = [x, y - arrowSize * Math.sqrt(3) / 4];
     		var point2 = [x - arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
     		var point3 = [x + arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
-        	this.SolidPolygon([point1, point2, point3], color, rotationAngle, [x, y])
+        	this.SolidPolygon([point1, point2, point3], color, angle, [x, y])
         		.attr({ x: x, y: y });
             return this;
         }
@@ -775,44 +794,9 @@ $(document).ready(function () {
     		var translatedPosition = Crafty.DOM.translate(event.clientX, event.clientY);
         	
         	if(player.isFiring && player.powerAmount > 0) {
-        		// calculate the angle that the mouse was released, and use that to calculate the target trajectory
-        		// tan a = y / x
-        		// x = p cos a
-        		// y = p cos a
-//        		var angle = (Math.atan2(translatedPosition.y - player.y, translatedPosition.x - player.x) * (180 / Math.PI));
-        		var angle = Math.atan(Math.abs((event.clientY - player.y) / (event.clientX - player.x)));
-//        		var targetPoint = {
-//        				x: 100 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
-//        				y: 100 * player.powerAmount * Math.sin(angle) * (event.clientY < player.y ? -1 : 1),
-//        		};
-        		
-        		// los attacks go until they hit something
-        		var targetPointInfinity = {
-        				x: 1000 * player.powerAmount * Math.cos(angle) * (player.faceDirection == DIRECTION.LEFT ? -1 : 1),
-        				y: 1000 * player.powerAmount * Math.sin(angle) * (event.clientY < player.y ? -1 : 1),
-        		};
-        		
-        		// calculation for rotating sprite
-        		// the rotation angle ends up being equivalent regardless of direction
-        		// need to compensate for this by re-doing the angle
-        		// sigh I'm bad, this can be avoided, but I messed up the points during the original calculation and since they are working there, I don't want to fix it
-        		// need to refactor the original angle calculation and fix the difference between mouse coordinates (based on lower left origin) and player coordinates (based on upper left origin)
-        		// but that will be later
-        		// TODO fix this to use box2d
-                var translatedAngle = Math.atan2(player.y - translatedPosition.y, player.x - translatedPosition.x);	// multiply by -1 because the angle is actually the opposite (DOM based on upper left origin)
-        		var rotationAngle;
-        		if(player.faceDirection == DIRECTION.RIGHT && translatedPosition.y > player.y) {
-        			rotationAngle = -1 * translatedAngle;
-        		}
-        		else if(player.faceDirection == DIRECTION.RIGHT && translatedPosition.y < player.y) {
-        			rotationAngle = translatedAngle;
-        		}
-        		else if(player.faceDirection == DIRECTION.LEFT && translatedPosition.y > player.y) {
-        			rotationAngle = -1 * translatedAngle + Math.PI / 2;
-        		}
-        		else if(player.faceDirection == DIRECTION.LEFT && translatedPosition.y < player.y) {
-        			rotationAngle = translatedAngle - Math.PI / 2;
-        		}
+                var translatedAngle = Math.atan2(translatedPosition.y - player.y, translatedPosition.x - player.x);
+        		var rotationAngle = translatedAngle - Math.PI;	// rotation angle needs to be mapped to take into account the DOM origin
+        		console.log("firing at " + (rotationAngle * 180 / Math.PI));
         		
         		player.isFiring = false;
         		if(player.has("projectileAttacker")) {
@@ -820,14 +804,14 @@ $(document).ready(function () {
 	    						            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
 	    						            .ExplodingProjectile("projectile");
 
-	                projectile.Attack(20 * player.powerAmount, rotationAngle);
+	                projectile.Throw(50 * player.powerAmount, rotationAngle);
         		}
         		else if(player.has("lineOfSightAttacker")) {
 	                var los = Crafty.e("2D, DOM, Box2D, LineOfSightAttack")
 								            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
 	    						            .LineOfSightAttack("lineofsight");
 
-	                los.Attack(20 * player.powerAmount, rotationAngle);
+	                los.Attack(50 * player.powerAmount, rotationAngle);
         		}
         		
         		player.powerAmount = 0;
@@ -885,11 +869,13 @@ $(document).ready(function () {
 
 
         		// remove any existing slingshots and draw a new one
+                var translatedAngle = Math.atan2(translatedPosition.y - player.y, translatedPosition.x - player.x);
+        		var rotationAngle = translatedAngle - Math.PI;	// rotation angle needs to be mapped to take into account the DOM origin
         		Crafty("Slingshot").destroy();
         		Crafty.e("Slingshot")
     	    		.Slingshot(player.x, player.y, distance, intensity)
     	    		.attach(Crafty.e("SlingshotAnchor").SlingshotAnchor(event.clientX, event.clientY, intensity))
-    	    		.attach(Crafty.e("SlingshotArrow").SlingshotArrow(player.x, player.y, 2 * player.x - event.clientX, 2 * player.y - event.clientY, distance, intensity));
+    	    		.attach(Crafty.e("SlingshotArrow").SlingshotArrow(2 * player.x - event.clientX, 2 * player.y - event.clientY, rotationAngle, intensity));
             	
         		Crafty.trigger("UpdatePower", player);
 
@@ -900,6 +886,9 @@ $(document).ready(function () {
         		else {
         			player.trigger("FaceNewDirection", 1);
         		}
+        		
+//        		console.log("angle: " + (translatedAngle * 180 / Math.PI));
+//        		console.log("actual angle: " + (rotationAngle * 180 / Math.PI));
         	}
         });
 

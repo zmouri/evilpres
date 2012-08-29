@@ -178,8 +178,9 @@ Crafty.c("Box2D", {
 			if(!isNaN(entity)){					
 				var obj = Crafty(entitys[entity]);
 				if(!obj.__c["Box2D"]){
-					return false;
+					continue;	// don't return here or we'll skip all the components
 				}else{					
+					var cncts =  Crafty.box2D.contacts;
 					for(_contact in Crafty.box2D.contacts){							
 						var contact = Crafty.box2D.contacts[_contact];							
 						for(i in this.fixtures){
