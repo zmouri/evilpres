@@ -2729,9 +2729,9 @@ Crafty.c("Collision", {
 				dupes[id] = obj;
 			
 			// check circle collision
-			if (!dupes[id] && this[0] !== id && obj.__c[comp] &&
-					hasMap && area.map.containsPoint(oarea._x, oarea._y))
-				dupes[id] = obj;
+//			if (!dupes[id] && this[0] !== id && obj.__c[comp] &&
+//					hasMap && area.map.containsPoint(oarea._x, oarea._y))
+//				dupes[id] = obj;
 		}
 
 		for (key in dupes) {

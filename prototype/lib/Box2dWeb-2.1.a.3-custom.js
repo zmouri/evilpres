@@ -4409,6 +4409,7 @@ Box2D.postDefs = [];
       this.m_sweep = new b2Sweep();
       this.m_linearVelocity = new b2Vec2();
       this.m_force = new b2Vec2();
+      this.m_gravityScale = 1;
    };
    b2Body.prototype.connectEdges = function (s1, s2, angle1) {
       if (angle1 === undefined) angle1 = 0;
@@ -4605,6 +4606,12 @@ Box2D.postDefs = [];
       this.m_linearVelocity.y += this.m_invMass * impulse.y;
       this.m_angularVelocity += this.m_invI * ((point.x - this.m_sweep.c.x) * impulse.y - (point.y - this.m_sweep.c.y) * impulse.x);
    }
+   b2Body.prototype.GetGravityScale = function () {
+      return this.m_gravityScale;
+   }
+   b2Body.prototype.SetGravityScale = function (scale) {
+	      return this.m_gravityScale = scale;
+	   }
    b2Body.prototype.Split = function (callback) {
       var linearVelocity = this.GetLinearVelocity().Copy();
       var angularVelocity = this.GetAngularVelocity();
@@ -5492,8 +5499,8 @@ Box2D.postDefs = [];
       i < this.m_bodyCount; ++i) {
          b = this.m_bodies[i];
          if (b.GetType() != b2Body.b2_dynamicBody) continue;
-         b.m_linearVelocity.x += step.dt * (gravity.x + b.m_invMass * b.m_force.x);
-         b.m_linearVelocity.y += step.dt * (gravity.y + b.m_invMass * b.m_force.y);
+         b.m_linearVelocity.x += step.dt * (b.m_gravityScale * gravity.x + b.m_invMass * b.m_force.x);
+         b.m_linearVelocity.y += step.dt * (b.m_gravityScale * gravity.y + b.m_invMass * b.m_force.y);
          b.m_angularVelocity += step.dt * b.m_invI * b.m_torque;
          b.m_linearVelocity.Multiply(b2Math.Clamp(1.0 - step.dt * b.m_linearDamping, 0.0, 1.0));
          b.m_angularVelocity *= b2Math.Clamp(1.0 - step.dt * b.m_angularDamping, 0.0, 1.0);

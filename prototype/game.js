@@ -17,11 +17,14 @@ var GRAVITY = 10;
 var PIXEL2METER_RATIO = 32;
 var EXPLOSION_RADIUS = 70;
 var MAX_PLAYERS = 2;
+var PLAYER_HP = 100;
+var EXPLOSION_DAMAGE = 30;
 
 var DIRECTION = {
 		LEFT : -1,
 		RIGHT: 1,
 };
+var destroyedBodies = [];
 	
 $(document).ready(function () {
 	
@@ -75,13 +78,26 @@ $(document).ready(function () {
             }
         }
         
-	    var floor = Crafty.e("2D, DOM, Box2D, ground")
+	    var water = Crafty.e("2D, DOM, Box2D, water")
 	        .attr({ x: 0, y: 0})
 	        .box2d({
 	            bodyType: 'static',
-	            shape: [[0, WINDOW_HEIGHT - GROUND_HEIGHT],
-	                    [WINDOW_WIDTH, WINDOW_HEIGHT - GROUND_HEIGHT]]
+	            shape: [[0, WINDOW_HEIGHT],
+	                    [WINDOW_WIDTH, WINDOW_HEIGHT]]
 	        });
+        
+//	    var floor = Crafty.e("2D, DOM, Box2D, ground, explodable")
+//	        .attr({ x: 0, y: 0})
+//	        .box2d({
+//	            bodyType: 'static',
+//	            shape: [[0, WINDOW_HEIGHT - GROUND_HEIGHT],
+//	                    [WINDOW_WIDTH, WINDOW_HEIGHT - GROUND_HEIGHT]]
+//	        })
+//	        .bind('HitByExplosion', function() {
+//            	console.log("Exploding " + this[0]);
+//            	Crafty.box2D.world.DestroyBody(this.body);
+//	            this.destroy();
+//	        });
     }
     
     function endTurn() {
@@ -141,37 +157,37 @@ $(document).ready(function () {
         });
     });
     
-    Crafty.c('BombDropper', {
-        _dropped: 0,
-        maxBombs: 2,
-        _key: Crafty.keys.SPACE,
-
-        BombDropper: function() {
-            var dropper = this;
-            
-            //Create the bomb
-            this.bind('KeyDown', function(e) {
-                if (e.key !== this._key) {
-                    return;
-                }
-                
-                if(this._dropped < this.maxBombs) {
-                    Crafty.e('ExplodingProjectile')
-                        .attr({z:100})
-                        .col(this.col())
-                        .row(this.row())
-//                        .ExplodingProjectile()
-                        .bind('explode', function() {
-                            dropper._dropped--;
-                        });
-
-                    this._dropped++;
-                }
-            });
-            
-            return this;
-        },
-    });
+//    Crafty.c('BombDropper', {
+//        _dropped: 0,
+//        maxBombs: 2,
+//        _key: Crafty.keys.SPACE,
+//
+//        BombDropper: function() {
+//            var dropper = this;
+//            
+//            //Create the bomb
+//            this.bind('KeyDown', function(e) {
+//                if (e.key !== this._key) {
+//                    return;
+//                }
+//                
+//                if(this._dropped < this.maxBombs) {
+//                    Crafty.e('ExplodingProjectile')
+//                        .attr({z:100})
+//                        .col(this.col())
+//                        .row(this.row())
+////                        .ExplodingProjectile()
+//                        .bind('Explode', function() {
+//                            dropper._dropped--;
+//                        });
+//
+//                    this._dropped++;
+//                }
+//            });
+//            
+//            return this;
+//        },
+//    });
     
     Crafty.c('RangedAttacker', {
         RangedAttacker: function() {
@@ -195,42 +211,59 @@ $(document).ready(function () {
     });
 
     Crafty.c('LineOfSightAttack', {
-    	LineOfSightAttack: function(graphic) {
+    	attacker: null,
+    	
+    	LineOfSightAttack: function(graphic, attacker) {
+        	this.attacker = attacker;
         	Crafty.audio.play("lineofsight1", -1);
+        	
             this.requires("2D, DOM, Box2D, SpriteAnimation, explodable, " + graphic)
                 .animate('fly', 4, 1, 6)
                 .animate('fly', 10, -1)
+//                .collision()
                 .box2d({
                 	bodyType: 'dynamic',
                 	density: 30,
                 	restitution: 0.1,
                 })
-   			 	.onContact("ground", function(data){
-		 			console.log("hit ground");
-		 			this.trigger("explode");
-   			 	})
-   			 	.onContact("player", function(data){
-		 			console.log("hit player");
-		 			this.trigger("explode");
-   			 	})
+//                .onHit('ground', function(o) {
+//                	console.log('hit ground');
+//                    this.trigger("Explode");
+//                })
+//                .onHit('player', function(o) {
+//                	console.log('hit player');
+//                    this.trigger("Explode");
+//                })
+//   			 	.onContact("ground", function(data){
+//		 			console.log("contact ground");
+//		 			this.trigger("Explode");
+//   			 	})
+//   			 	.onContact("player", function(data){
+//		 			console.log("contact player");
+//		 			this.trigger("Explode");
+//   			 	})
                 .timeout(function() {	// TODO change this from timeout to if it goes too far away
-                    this.trigger("explode");
+                    this.trigger("Explode");
                 }, 5000)
-                .bind('explode', function() {
+                .bind("Explode", function() {
                 	Crafty.audio.stop("lineofsight1");
                 	
                     // create explosion
-                    Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
-            			.attr({x: this.x, y: this.y, z: 4})
-                    	.Explode("explosion");
+                	// need to wait a frame or two until after the contact is over
+                	this.timeout(function() {
+	                    Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
+	            			.attr({x: this.x, y: this.y, z: 4})
+	                    	.Explode("explosion", this.attacker);
+                	}, 48);
                     
                     // remove projectile
-                    this.destroy();
-                })
-                .bind("EnterFrame", function() {
-                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
+                    destroyedBodies.push(this);
                 });
+//                .bind("EnterFrame", function() {
+//                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
+//                });
 			
+            this.body.SetGravityScale(0);
 			return this;
         },
         
@@ -240,9 +273,13 @@ $(document).ready(function () {
         }
     });
     
-    Crafty.c('ExplodingProjectile', {        
-        ExplodingProjectile: function(graphic) {
+    Crafty.c('ExplodingProjectile', {
+    	attacker: null,
+    	
+        ExplodingProjectile: function(graphic, attacker) {
+        	this.attacker = attacker;
         	Crafty.audio.play("projectile1", -1);
+        	
             this.requires("2D, DOM, Box2D, SpriteAnimation, explodable, " + graphic)
                 .animate('fly', 4, 0, 6)
                 .animate('fly', 10, -1)
@@ -252,18 +289,18 @@ $(document).ready(function () {
                 	restitution: 0.8,
                 })
                 .timeout(function() {
-                    this.trigger("explode");
+                    this.trigger("Explode");
                 }, 1000)
-                .bind('explode', function() {
+                .bind("Explode", function() {
                 	Crafty.audio.stop("projectile1");
                 	
                     // create explosion
                     Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
             			.attr({x: this.x, y: this.y, z: 4})
-                    	.Explode("explosion");
+                    	.Explode("explosion", this.attacker);
                     
                     // remove projectile
-                    this.destroy();
+                    destroyedBodies.push(this);
                 });
             
             return this;
@@ -284,51 +321,67 @@ $(document).ready(function () {
     });
     
     Crafty.c('ProjectileExplosion', {
-        Explode: function(graphic) {
+    	attacker: null,
+    	
+        Explode: function(graphic, attacker) {
+        	this.attacker = attacker;
         	Crafty.audio.play("explosion1", -1);
-//        	var img = Crafty.e("2D, DOM, Image")
-//        					.image(IMG_EXPLOSION)
-//        					.attr({ x: x - EXPLOSION_RADIUS, y: y - EXPLOSION_RADIUS, z: z });
         	
-            this.requires("2D, DOM, Box2D, Collision, " + graphic)
-//				.attr({ x: x, y: y, z: z })
-//				.attach(img)
+        	// TODO uses collision because we still have some non-box2d elements that need to be removed
+        	// box2d won't collide with non-box2d elements
+        	// also this needs to be dynamic, because two static objects also cannot collide
+            this.requires("2D, DOM, Box2D, Collision, WiredHitBox, " + graphic)
                 .box2d({
-                	density: 0.1,
-            		bodyType: 'static',
-//            		shape: 'circle',
+                	density: 1,
+            		bodyType: 'dynamic',
                 })
-    			.collision()
+    			.collision(new Crafty.circle(0, 0, EXPLOSION_RADIUS))
 //                .onContact('explodable', function(o) {
 //                	console.log('contact explodable');
 //                    for(var i = 0; i < o.length; i++) {
-//                        o[i].obj.trigger("explode");
+//                        o[i].obj.trigger("HitByExplosion");
 //                    }
 //                })
                 .onHit('explodable', function(o) {
                 	console.log('hit explodable');
                     for(var i = 0; i < o.length; i++) {
-                        o[i].obj.trigger("explode");
+                        o[i].obj.trigger("HitByExplosion");
                     }
                 })
-                .onHit('player', function(o) {
-                	console.log('hit player');
-                    for(var i = 0; i < o.length; i++) {
-                        o[i].obj.trigger("damage");
-                    }
-                })
+//                .onHit('player', function(o) {
+//                	console.log('hit player');
+//                    for(var i = 0; i < o.length; i++) {
+//                        o[i].obj.trigger("TakeDamage", [this.attacker, "explosion"]);
+//                    }
+//                })
+//   			 	.onContact("player", function(o){
+//		 			console.log("hit player");
+//                    for(var i = 0; i < o.length; i++) {
+//                        o[i].obj.trigger("TakeDamage", [this.attacker, "explosion"]);
+//                    }
+//   			 	})
                 .timeout(function() {
                 	Crafty.audio.stop("explosion1");
-                	
-                    this.destroy();
-                }, 2000)
-                .bind("EnterFrame", function() {
-                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
-                });
-            
+                    destroyedBodies.push(this);
+                }, 2000);
+//                .bind("EnterFrame", function() {
+//                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
+//                });
+
+            this.body.SetGravityScale(0);
+            this.body.SetUserData(this);	// TODO is this needed?
             this.body.SetFixedRotation(true);
-//            this.fixtures[0].m_shape.SetRadius(EXPLOSION_RADIUS);
             
+            // add circle censor
+            var circle = new b2CircleShape();
+            circle.SetRadius(EXPLOSION_RADIUS/PIXEL2METER_RATIO);
+            
+            var fixture = new b2FixtureDef();
+            fixture.shape = circle;
+            fixture.isSensor = true;
+//            fixture.filter.categoryBits = RADAR_SENSOR;
+//            fixture.filter.maskBits = ENEMY_AIRCRAFT;//radar only collides with aircraft
+            this.body.CreateFixture(fixture);
             return this;
         },
     });
@@ -464,6 +517,7 @@ $(document).ready(function () {
     	powerAmount: 0,
     	faceDirection: 0,
     	playerNum: 0,
+    	hp: PLAYER_HP,
     	
     	Character: function(num) {
 			this.playerNum = num;
@@ -516,13 +570,7 @@ $(document).ready(function () {
                                 if (!this.isPlaying("walk_right"))
                                     this.stop().animate("walk_right", 10, 1);
                             }
-                    })
-                // A rudimentary way to prevent the user from passing solid areas
-//	                .bind('Moved', function(from) {
-//	                    if(this.hit('solid')){
-//	                        this.attr({x: from.x, y:from.y});
-//	                    }
-//	                })
+                })
 //	                .onHit("solid", function(hit) {
 //	                    for (var i = 0; i < hit.length; i++) {
 //	                        if (hit[i].normal.y !== 0) { // we hit the top or bottom of it
@@ -538,9 +586,9 @@ $(document).ready(function () {
 //	                        }
 //	                    }
 //	                })
-//	                .onHit("fire", function() {
-//	                    this.destroy();
-//	                })
+//                .onContact("explosion", function() {
+//                    this.trigger("TakeDamage", [null, "explosion"]);	// TODO how do we get attacker here?
+//                })
                 .bind("StartTurn", function (turnNum) {
                     if (this.playerNum === turnNum) {
                     	this.addComponent("RangedAttacker")
@@ -557,8 +605,39 @@ $(document).ready(function () {
         	    	    
     	    			this.disableControls = true;
                     }
+                })
+                .bind("Drowned", function() {
+                	console.log("player " + this.playerNum + " drowned");
+                	this.hp = 0;	                    	
+                	this.trigger("CheckDeath", this);
+                })
+                .bind("HitByExplosion", function (attacker) {
+                	console.log("player " + this.playerNum + " hit by explosion");
+                    this.trigger("TakeDamage", [attacker, "explosion"]);
+                })
+                .bind("TakeDamage", function (args) {
+                	var attacker = args[0];
+                	var attackType = args[1];
+
+                	console.log("player " + this.playerNum + " taking damage from " + attacker.playerNum);
+                    if (attackType === "explosion") {
+                    	// TODO reduce this by distance
+                    	this.hp -= EXPLOSION_DAMAGE;
+                    	console.log("player " + this.playerNum + " new hp: " + this.hp);
+                    	
+                    	this.trigger("CheckDeath", attacker);                    	
+                    }
+                })
+                .bind("CheckDeath", function (attacker) {
+                    if (this.hp <= 0) {
+                    	console.log("player " + this.playerNum + " died");
+                        destroyedBodies.push(this);
+                    	
+                    	Crafty.trigger("GameOver", this);
+                    }
                 });
-            	
+
+ 			console.log("created player " + this.playerNum + " represented by entity " + this[0]);
             return this;
         },
     });
@@ -802,14 +881,14 @@ $(document).ready(function () {
         		if(player.has("projectileAttacker")) {
 	                var projectile = Crafty.e("2D, DOM, Box2D, ExplodingProjectile")
 	    						            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
-	    						            .ExplodingProjectile("projectile");
+	    						            .ExplodingProjectile("projectile", player);
 
 	                projectile.Throw(50 * player.powerAmount, rotationAngle);
         		}
         		else if(player.has("lineOfSightAttacker")) {
 	                var los = Crafty.e("2D, DOM, Box2D, LineOfSightAttack")
 								            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
-	    						            .LineOfSightAttack("lineofsight");
+	    						            .LineOfSightAttack("lineofsight", player);
 
 	                los.Attack(50 * player.powerAmount, rotationAngle);
         		}
@@ -892,8 +971,100 @@ $(document).ready(function () {
         	}
         });
 
+        Crafty.bind("GameOver", function(loser) {
+        	var winner = loser.playerNum === 1 ? 2 : 1;
+            var text = Crafty.e("2D, DOM, Text").attr({ w: 100, h: 20, x: WINDOW_WIDTH / 2 - 60, y: WINDOW_HEIGHT / 2, z: 100 })
+				            .text("Player " + loser.playerNum + " has died! Player " + winner + " has won! You are winner ha ha ha!")
+				            .css({ "text-align": "center", "color": "black" });
+        });
+
 		Crafty.trigger("UpdateTurn");
     });
+
+    Crafty.box2D.world.SetContactListener({
+    	BeginContact : function(contact) {
+    		var fixtureA = contact.GetFixtureA();
+    		var fixtureB = contact.GetFixtureB();
+			var entityA = fixtureA.GetBody().GetUserData();
+			var entityB = fixtureB.GetBody().GetUserData();
+			
+			if(entityA.__c["ProjectileExplosion"] || entityB.__c["ProjectileExplosion"]) {
+        	    if (fixtureA.IsSensor()) {	// A is the explosion
+        	    	console.log("entity " + entityB[0] + " hit by " + entityA[0]);
+        	    	entityB.trigger("HitByExplosion", entityA.attacker);
+        	    }
+        	    else { // B is the explosion
+        	    	console.log("entity " + entityA[0] + " hit by " + entityB[0]);
+        	    	entityA.trigger("HitByExplosion", entityB.attacker);
+        	    }
+			}
+			
+//			if(entityA.__c["explodable"]) {
+//	 			if(entityB.__c["ProjectileExplosion"]) {
+//        	    	console.log("entity " + entityA[0] + " exploding from " + entityB[0]);
+//	 				entityA.trigger("HitByExplosion", entityB.attacker);
+//	 			}
+//			}
+//			
+//			if(entityB.__c["explodable"]) {
+//	 			if(entityA.__c["ProjectileExplosion"]) {
+//        	    	console.log("entity " + entityB[0] + " exploding from " + entityA[0]);
+//	 				entityB.trigger("HitByExplosion", entityA.attacker);
+//	 			}
+//			}
+			
+			if(entityA.__c["water"]) {
+	 			console.log("entity " + entityB[0] + " fell into a bottomless water pit");
+	 			
+	 			if(entityB.__c["Character"]) {
+	 				entityB.trigger("Drowned");
+	 			}
+	 			else {
+	 				destroyedBodies.push(entityB);
+	 			}
+			} 
+			
+			if(entityB.__c["water"]) {
+	 			console.log("entity " + entityA[0] + " fell into a bottomless water pit");
+	 			
+	 			if(entityA.__c["Character"]) {
+	 				entityA.trigger("Drowned");
+	 			}
+	 			else {
+	 				destroyedBodies.push(entityA);
+	 			}
+			}
+			
+			// TODO: workaround so that the missile does not immediately hit the attacker
+			// need to figure out how to avoid this
+			if(entityA.__c["LineOfSightAttack"] && !entityB.__c["lineOfSightAttacker"]) {
+	 			console.log("los missile " + entityA[0] + " hit something");
+	 			entityA.trigger("Explode");
+			}
+			
+			if(entityB.__c["LineOfSightAttack"] && !entityA.__c["lineOfSightAttacker"]) {
+	 			console.log("los missile " + entityB[0] + " hit something");
+	 			entityB.trigger("Explode");
+			}
+    	},
+    	
+    	EndContact : function(contact) {},
+    	PreSolve : function(contact, manifold) {},
+    	PostSolve : function(contact, manifold) {},
+    });
+    
+    Crafty.bind("EnterFrame", function() {
+		while(destroyedBodies.length > 0) {
+		    var entity = destroyedBodies.pop();
+		    console.log("Removing entity " + entity[0] + " from the scene");
+		    
+		    if(entity.__c["Box2D"]) {
+		    	console.log("  destroying body first");
+	        	Crafty.box2D.world.DestroyBody(entity.body);
+		    }
+        	entity.destroy();
+		}
+    });    
     
 //    Crafty.viewport.mouselook(true);
     

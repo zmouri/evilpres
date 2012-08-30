@@ -1,8 +1,9 @@
 function createBaseTile(x, y, z) {
 	return Crafty.e("2D, DOM, explodable, ground, grass" + Crafty.math.randomInt(1, 4))
 	                .attr({ x: x, y: y, z: z, })
-	                .bind('explode', function() {
-	                    this.destroy();
+	                .bind('HitByExplosion', function(attacker) {
+	                	console.log("Exploding " + this[0]);
+	                    destroyedBodies.push(this);
 	                });
 }
 
@@ -12,8 +13,9 @@ function createSurfaceTile(x, y, z) {
 			        .attr({ x: x, y: y, z: z, })
 		    		.animate('wind', 0, 1, 3)
 					.animate('wind', 80, -1)
-			        .bind('explode', function() {
-			            this.destroy();
+			        .bind('HitByExplosion', function(attacker) {
+	                	console.log("Exploding " + this[0]);
+	                    destroyedBodies.push(this);
 			        })
 				    .box2d({
 				        bodyType: 'static',
@@ -24,8 +26,9 @@ function createSurfaceTile(x, y, z) {
 			        .attr({ x: x, y: y, z: z, })
 					.animate('wind', 0, 2, 1)
 					.animate('wind', 80, -1)
-			        .bind('explode', function() {
-			            this.destroy();
+			        .bind('HitByExplosion', function(attacker) {
+	                	console.log("Exploding " + this[0]);
+	                    destroyedBodies.push(this);
 			        })
 				    .box2d({
 				        bodyType: 'static',
@@ -42,7 +45,7 @@ function addObstacles() {
 //	        shape: [[0, 288],
 //	                [256, 288]]
 //	    })
-//        .bind('explode', function() {
+//        .bind('HitByExplosion', function(attacker) {
 //            this.destroy();
 //        }); 
 	createBaseTile(0, 288, 1);
@@ -79,7 +82,7 @@ function addObstacles() {
 //	        shape: [[128, 272],
 //	                [224, 272]]
 //	    })
-//        .bind('explode', function() {
+//        .bind('HitByExplosion', function(attacker) {
 //            this.destroy();
 //        });
 	createBaseTile(128, 272, 1);
@@ -100,7 +103,7 @@ function addObstacles() {
 //	        shape: [[160, 256],
 //	                [192, 256]]
 //	    })
-//        .bind('explode', function() {
+//        .bind('HitByExplosion', function(attacker) {
 //            this.destroy();
 //        });
 	createBaseTile(160, 256, 1);
@@ -116,7 +119,7 @@ function addObstacles() {
 //	        shape: [[496, 288],
 //	                [656, 288]]
 //	    })
-//        .bind('explode', function() {
+//        .bind('HitByExplosion', function(attacker) {
 //            this.destroy();
 //        });
 	createBaseTile(496, 288, 1);
@@ -143,7 +146,7 @@ function addObstacles() {
 //	        shape: [[576, 272],
 //	                [640, 272]]
 //	    })
-//        .bind('explode', function() {
+//        .bind('HitByExplosion', function(attacker) {
 //            this.destroy();
 //        });
 	createBaseTile(576, 272, 1);
@@ -163,8 +166,9 @@ function addObstacles() {
 	        shape: [[800, 96],
 	                [832, 96]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(800, 96, 1);
 	createBaseTile(816, 96, 1);
@@ -176,8 +180,9 @@ function addObstacles() {
 	        shape: [[768, 112],
 	                [848, 112]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(768, 112, 1);
 	createBaseTile(784, 112, 1);
@@ -192,8 +197,9 @@ function addObstacles() {
 	        shape: [[752, 128],
 	                [864, 128]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(752, 128, 1);
 	createBaseTile(768, 128, 1);
@@ -210,8 +216,9 @@ function addObstacles() {
 	        shape: [[816, 144],
 	                [880, 144]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(816, 144, 1);
 	createBaseTile(832, 144, 1);
@@ -225,8 +232,9 @@ function addObstacles() {
 	        shape: [[800, 160],
 	                [896, 160]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(800, 160, 1);
 	createBaseTile(816, 160, 1);
@@ -242,8 +250,9 @@ function addObstacles() {
 	        shape: [[816, 176],
 	                [912, 176]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(816, 176, 1);
 	createBaseTile(832, 176, 1);
@@ -259,8 +268,9 @@ function addObstacles() {
 	        shape: [[816, 192],
 	                [928, 192]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(816, 192, 1);
 	createBaseTile(832, 192, 1);
@@ -277,8 +287,9 @@ function addObstacles() {
 	        shape: [[832, 208],
 	                [944, 208]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(832, 208, 1);
 	createBaseTile(848, 208, 1);
@@ -295,8 +306,9 @@ function addObstacles() {
 	        shape: [[832, 224],
 	                [960, 224]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(832, 224, 1);
 	createBaseTile(848, 224, 1);
@@ -314,8 +326,9 @@ function addObstacles() {
 	        shape: [[848, 240],
 	                [976, 240]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(848, 240, 1);
 	createBaseTile(864, 240, 1);
@@ -333,8 +346,9 @@ function addObstacles() {
 	        shape: [[848, 256],
 	                [992, 256]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(848, 256, 1);
 	createBaseTile(864, 256, 1);
@@ -353,8 +367,9 @@ function addObstacles() {
 	        shape: [[864, 272],
 	                [1008, 272]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(864, 272, 1);
 	createBaseTile(880, 272, 1);
@@ -373,8 +388,9 @@ function addObstacles() {
 	        shape: [[864, 288],
 	                [1024, 288]]
 	    })
-        .bind('explode', function() {
-            this.destroy();
+        .bind('HitByExplosion', function(attacker) {
+        	console.log("Exploding " + this[0]);
+            destroyedBodies.push(this);
         });
 	createBaseTile(864, 288, 1);
 	createBaseTile(880, 288, 1);
