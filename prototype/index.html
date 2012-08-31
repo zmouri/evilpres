@@ -1,29 +1,41 @@
 <!DOCTYPE html>
 <head>
-    <script type="text/javascript" src="lib/jquery-1.8.0.js"></script>
-    <script type="text/javascript" src="lib/jquery.mousewheel.js"></script>
-    <script type="text/javascript" src="lib/Box2dWeb-2.1.a.3-custom.js"></script> <!-- todo maybe switch to pixellab's implementation -->
-    <script type="text/javascript" src="lib/crafty-0.4.9-custom.js"></script>
-    <script type="text/javascript" src="lib/craftybox2d-release-custom.js"></script>
-    <script type="text/javascript" src="game.js"></script>
-    <script type="text/javascript" src="level.js"></script>
-    <title>Prototype Game</title>
-    <link rel="stylesheet" type="text/css" href="style/style.css" />
+<script type="text/javascript" src="lib/jquery-1.8.0.js"></script>
+<script type="text/javascript" src="lib/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="lib/Box2dWeb-2.1.a.3-custom.js"></script>
+<!-- todo maybe switch to pixellab's implementation -->
+<script type="text/javascript" src="lib/crafty-0.4.9-custom.js"></script>
+<script type="text/javascript" src="lib/craftybox2d-release-custom.js"></script>
+<script type="text/javascript" src="consts.js"></script>
+<script type="text/javascript" src="audio.js"></script>
+<script type="text/javascript" src="sprites.js"></script>
+<script type="text/javascript" src="aiming.js"></script>
+<script type="text/javascript" src="level.js"></script>
+<script type="text/javascript" src="player.js"></script>
+<script type="text/javascript" src="scenes.js"></script>
+<script type="text/javascript" src="scroller.js"></script>
+<script type="text/javascript" src="shapes.js"></script>
+<script type="text/javascript" src="tick.js"></script>
+<script type="text/javascript" src="weapons.js"></script>
+<script type="text/javascript" src="collision.js"></script>
+<script type="text/javascript" src="game.js"></script>
+<title>Prototype Game</title>
+<link rel="stylesheet" type="text/css" href="style/style.css" />
 </head>
 <body>
-    <div id="start">
-    </div>
-    <div id="interface">
-        <div class="bars top">
-            <span id="power" >Power: <span class="text"></span></span>
-            <span id="padding" style="margin-left: 20px"></span>
-            <span id="turn" >Turn: <span class="text"></span></span>
-        </div>
-    </div>
-    <div id="cr-stage">
-	    <div id="startscreen">
-	         <div id="startbutton" class="button">Play Game!</div>
-	    </div>
-    </div>
+	<div id="start">Click to start</div>
+	<div id="interface">
+		<div class="bars top">
+			<span id="power">Power: <span class="text"></span></span> <span
+				id="padding" style="margin-left: 20px"></span> <span id="turn">Turn:
+				<span class="text"></span>
+			</span>
+		</div>
+	</div>
+	<div id="cr-stage">
+		<div id="startscreen">
+			<div id="startbutton" class="button">Play Game!</div>
+		</div>
+	</div>
 </body>
 </html>

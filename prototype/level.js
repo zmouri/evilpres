@@ -1,3 +1,43 @@
+var GROUND_HEIGHT = 100;
+
+function generateWorld() {
+    //loop through all tiles
+    for (var tileX = 0; tileX < WINDOW_WIDTH / 16; tileX++) {
+        for (var tileY = 0; tileY < WINDOW_HEIGHT / 16; tileY++) {
+        	
+            // place grass on all tiles
+    		createBaseTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 1);
+            
+            // flowers and bushes on the top ground layer minus obstacles
+        	// TODO remove hardcoding
+            if(tileY === 0 && (tileX > 15) && (tileX < 31 || tileX > 40) && (tileX < 54 || tileX > 63)) {
+            	createSurfaceTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 2);
+            }
+        }
+    }
+    
+    var water = Crafty.e("2D, DOM, Box2D, water")
+        .attr({ x: 0, y: 0})
+        .box2d({
+            bodyType: 'static',
+            shape: [[0, WINDOW_HEIGHT],
+                    [WINDOW_WIDTH, WINDOW_HEIGHT]]
+        });
+        
+//	    var floor = Crafty.e("2D, DOM, Box2D, ground, explodable")
+//	        .attr({ x: 0, y: 0})
+//	        .box2d({
+//	            bodyType: 'static',
+//	            shape: [[0, WINDOW_HEIGHT - GROUND_HEIGHT],
+//	                    [WINDOW_WIDTH, WINDOW_HEIGHT - GROUND_HEIGHT]]
+//	        })
+//	        .bind('HitByExplosion', function() {
+//            	console.log("Exploding " + this[0]);
+//            	Crafty.box2D.world.DestroyBody(this.body);
+//	            this.destroy();
+//	        });
+}
+    
 function createBaseTile(x, y, z) {
 	return Crafty.e("2D, DOM, explodable, ground, grass" + Crafty.math.randomInt(1, 4))
 	                .attr({ x: x, y: y, z: z, })
