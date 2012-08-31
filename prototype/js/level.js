@@ -16,7 +16,7 @@ function generateWorld() {
         }
     }
     
-    var water = Crafty.e("2D, DOM, Box2D, water")
+    Crafty.e("2D, DOM, Box2D, water")
         .attr({ x: 0, y: 0})
         .box2d({
             bodyType: 'static',
