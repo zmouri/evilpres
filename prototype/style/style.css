@@ -57,3 +57,11 @@ html {
     text-shadow: 1px 1px 1px #000;
     text-align: center;
 }
+
+.left {
+    float: left;
+}
+
+.right {
+	float: right;
+}
