@@ -211,7 +211,7 @@ Crafty.c('RangedAttacker', {
 		        	Crafty.trigger("Firing", this);
 		        	
 		    		// disable mouse look
-//		            Crafty.viewport.mouselook(false);
+		            Crafty.viewport.mouselook(false);
 		            
 		            // TODO need to disable movement
 	    		}

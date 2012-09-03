@@ -29,7 +29,7 @@ Crafty.c("SlingshotArrow", {
     },
     
     // construct an equilateral triangle
-    SlingshotArrow: function(x, y, angle, color) {    		
+    SlingshotArrow: function(x, y, angle, color) {
     	var arrowSize = 20;
 
 		var point1 = [x, y - arrowSize * Math.sqrt(3) / 4];

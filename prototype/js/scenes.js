@@ -43,14 +43,14 @@ Crafty.scene("main", function () {
 	
     //create our player entity with some premade components
     var player1 = Crafty.e("2D, DOM, Box2D, Character, player_bman, PlayerControl, RangedAttacker, projectileAttacker")
-            .attr({ x: 80, y: 0, z: 1 })
+            .attr({ x: 80, y: 0, z: 5 })
             .PlayerControl(2, 20)
             .RangedAttacker()
 //            .BombDropper()
             .Character(1);
     
     var player2 = Crafty.e("2D, DOM, Box2D, Character, player_iman, PlayerControl, lineOfSightAttacker")
-	        .attr({ x: 800, y: 0, z: 1 })
+	        .attr({ x: 800, y: 0, z: 5 })
             .PlayerControl(2, 4)
 	        .Character(2);
     		
@@ -93,14 +93,14 @@ Crafty.scene("main", function () {
     		player.isFiring = false;
     		if(player.has("projectileAttacker")) {
                 var projectile = Crafty.e("2D, DOM, Box2D, ExplodingProjectile")
-    						            .attr({ x: player.x + player.faceDirection * 16, y: player.y, z: 2 })
+    						            .attr({ x: player.x + Crafty.viewport.x + player.faceDirection * 16, y: player.y, z: 2 })
     						            .ExplodingProjectile("projectile", player);
 
                 projectile.Throw(50 * player.powerAmount, rotationAngle);
     		}
     		else if(player.has("lineOfSightAttacker")) {
                 var los = Crafty.e("2D, DOM, Box2D, LineOfSightAttack")
-							            .attr({ x: player.x + player.faceDirection * 16, y: player.y - 16, z: 2 })
+							            .attr({ x: player.x + Crafty.viewport.x + player.faceDirection * 16, y: player.y - 16, z: 2 })
     						            .LineOfSightAttack("lineofsight", player);
 
                 los.Attack(50 * player.powerAmount, rotationAngle);
@@ -112,7 +112,7 @@ Crafty.scene("main", function () {
     		// unbind mouse events and re-enable mouselook
             $(this).unbind('mouseup');
             $(this).unbind('mousemove');
-//        	Crafty.viewport.mouselook(true);
+        	Crafty.viewport.mouselook(true);
         	
         	// remove slingshot
     		Crafty("Slingshot").destroy();
@@ -132,7 +132,7 @@ Crafty.scene("main", function () {
     		// calculate distance between mouse cursor and player
     		// x^2 + y^2 = z^2
     		// the pixel distance is translated to "power" in increments of 20
-    		var distance = Math.sqrt(Math.pow(event.clientX - player.x, 2) + Math.pow(event.clientY - player.y, 2));
+    		var distance = Math.sqrt(Math.pow(translatedPosition.x - player.x, 2) + Math.pow(translatedPosition.y - player.y, 2));
     		if(distance > 100) {
     			player.powerAmount = 5;
     		}
@@ -166,13 +166,13 @@ Crafty.scene("main", function () {
     		Crafty("Slingshot").destroy();
     		Crafty.e("Slingshot")
 	    		.Slingshot(player.x, player.y, distance, intensity)
-	    		.attach(Crafty.e("SlingshotAnchor").SlingshotAnchor(event.clientX, event.clientY, intensity))
-	    		.attach(Crafty.e("SlingshotArrow").SlingshotArrow(2 * player.x - event.clientX, 2 * player.y - event.clientY, rotationAngle, intensity));
+	    		.attach(Crafty.e("SlingshotAnchor").SlingshotAnchor(translatedPosition.x, translatedPosition.y, intensity))
+	    		.attach(Crafty.e("SlingshotArrow").SlingshotArrow(2 * (player.x) - translatedPosition.x - Crafty.viewport.x, 2 * (player.y) - translatedPosition.y - Crafty.viewport.y, rotationAngle, intensity));
         	
     		Crafty.trigger("UpdatePower", player);
 
     		// if the mouse is behind the character, swivel
-    		if(event.clientX > player.x) {
+    		if(translatedPosition.x > player.x) {
     			player.trigger("FaceNewDirection", -1);
     		}
     		else {

@@ -12,7 +12,7 @@ $(document).ready(function () {
     Crafty.box2D.world.SetContactListener(contactListener);
 //    Crafty.box2D.showDebugInfo();
     
-//    Crafty.viewport.mouselook(true);
+    Crafty.viewport.mouselook(true);
     
 //    $(this).mousewheel(function(event, delta) {
 //    	Crafty.viewport.zoom(delta, 0, 0, 5);
