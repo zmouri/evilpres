@@ -5,7 +5,7 @@ Crafty.c("Slingshot", {
     
     Slingshot: function(x, y, radius, color) {        	
     	this.Circle(radius, color)
-    		.attr({ x: x, y: y });
+    		.attr({ x: x, y: y, z: 1000 });
         return this;
     }
 });
@@ -18,7 +18,7 @@ Crafty.c("SlingshotAnchor", {
     SlingshotAnchor: function(x, y, color) {
     	var anchorRadius = 2;
     	this.SolidCircle(anchorRadius, color)
-    		.attr({ x: x, y: y });
+    		.attr({ x: x, y: y, z: 1000 });
         return this;
     }
 });
@@ -36,7 +36,7 @@ Crafty.c("SlingshotArrow", {
 		var point2 = [x - arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
 		var point3 = [x + arrowSize / 2, y + arrowSize * Math.sqrt(3) / 4];
     	this.SolidPolygon([point1, point2, point3], color, angle, [x, y])
-    		.attr({ x: x, y: y });
+    		.attr({ x: x, y: y, z: 1000 });
         return this;
     }
 });

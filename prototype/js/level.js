@@ -1,21 +1,58 @@
+var IMG_LEVEL1 = "img/level1.png";
 var GROUND_HEIGHT = 100;
 
+Crafty.c("Ground", {
+	deletedPixels: [],
+	
+    init: function() {
+        this.requires('2D, Canvas, Image, Mask')
+			.attr({x: 0, y: GROUND_HEIGHT, z: 1})
+			.image(IMG_LEVEL1);
+        
+		this.bind("Draw", function() {
+	        var ctx = Crafty.canvas.context;
+	        for(var i = 0; i < this.deletedPixels.length; i++) {
+	        	var point1 = this.deletedPixels[i].point1;
+	        	var point2 = this.deletedPixels[i].point2;
+	    	    var imageData = ctx.getImageData(point1.x + Crafty.viewport.x, point1.y + Crafty.viewport.y, point2.x - point1.x, point2.y - point1.y);
+	    	    
+	    	    for (var x = 0; x < imageData.width; x++) {
+	    	    	for (var y = 0; y < imageData.height; y++) {
+	    	    		var offset = (y * imageData.width + x) * 4;
+	    	    		imageData.data[offset + 3] = 0;	// set alpha to 0
+	    	    	}
+	    	    }
+	    	    ctx.putImageData(imageData, point1.x + Crafty.viewport.x, point1.y + Crafty.viewport.y);
+	        }			
+		});
+    },
+
+    // TODO pass in a circle shape
+	SetDeletedPixels: function(point1, point2) {
+		this.deletedPixels.push({point1: point1, point2: point2});
+	},
+});
+
 function generateWorld() {
+	Crafty.e("Ground");
+	
+	// TODO here: create masking image with the same dimensions
+	
     //loop through all tiles
-    for (var tileX = 0; tileX < WINDOW_WIDTH / 16; tileX++) {
-        for (var tileY = 0; tileY < WINDOW_HEIGHT / 16; tileY++) {
-        	
-            // place grass on all tiles
-    		createBaseTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 1);
-            
-            // flowers and bushes on the top ground layer minus obstacles
-        	// TODO remove hardcoding
-            if(tileY === 0 && (tileX > 15) && (tileX < 31 || tileX > 40) && (tileX < 54 || tileX > 63)) {
-            	createSurfaceTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 2);
-            }
-        }
-    }
-    
+//    for (var tileX = 0; tileX < WINDOW_WIDTH / 16; tileX++) {
+//        for (var tileY = 0; tileY < WINDOW_HEIGHT / 16; tileY++) {
+//        	
+//            // place grass on all tiles
+//    		createBaseTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 1);
+//            
+//            // flowers and bushes on the top ground layer minus obstacles
+//        	// TODO remove hardcoding
+//            if(tileY === 0 && (tileX > 15) && (tileX < 31 || tileX > 40) && (tileX < 54 || tileX > 63)) {
+//            	createSurfaceTile(tileX * 16, WINDOW_HEIGHT - GROUND_HEIGHT + tileY * 16, 2);
+//            }
+//        }
+//    }
+//    
     Crafty.e("2D, DOM, Box2D, water")
         .attr({ x: 0, y: 0})
         .box2d({

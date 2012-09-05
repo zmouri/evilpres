@@ -193,7 +193,6 @@ var fireProjectile = function(event) {
     	
     	// remove slingshot
 		Crafty("Slingshot").destroy();
-		Crafty("Canvas").destroy();
 		
 		// end current turn
         endTurn();

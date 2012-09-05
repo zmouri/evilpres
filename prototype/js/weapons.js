@@ -140,6 +140,9 @@ Crafty.c('ProjectileExplosion', {
                 for(var i = 0; i < o.length; i++) {
                     o[i].obj.trigger("HitByExplosion");
                 }
+                
+                // TODO use circle
+                Crafty("Ground").SetDeletedPixels({x: this.x - 50, y: this.y - 50}, {x: this.x + 50, y: this.y + 50});
             })
 //                .onHit('player', function(o) {
 //                	console.log('hit player');
