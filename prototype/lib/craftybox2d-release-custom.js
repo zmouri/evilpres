@@ -354,6 +354,7 @@ Crafty.extend({
 				c.style.position = 'absolute';
 				c.style.left = "0px";
 				c.style.top = "0px";
+				c.style.zIndex = "3001";
 
 				Crafty.stage.elem.appendChild(c);
 				

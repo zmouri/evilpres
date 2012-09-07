@@ -36,42 +36,40 @@ Crafty.c('Character', {
             })
 //	                .collision()
             //change direction when a direction change event is received
-            .bind("NewDirection",
-                function (direction) {
-                    if (direction.x < 0) {
-                    	this.faceDirection = DIRECTION.LEFT;
-                        if (!this.isPlaying("walk_left"))
-                            this.stop().animate("walk_left", 10, -1);
-                    }
-                    if (direction.x > 0) {
-                    	this.faceDirection = DIRECTION.RIGHT;
-                        if (!this.isPlaying("walk_right"))
-                            this.stop().animate("walk_right", 10, -1);
-                    }
-                    if (direction.y < 0) {
-                        if (!this.isPlaying("walk_up"))
-                            this.stop().animate("walk_up", 10, -1);
-                    }
-                    if (direction.y > 0) {
-                        if (!this.isPlaying("walk_down"))
-                            this.stop().animate("walk_down", 10, -1);
-                    }
-                    if(!direction.x && !direction.y) {
-                        this.stop();
-                    }
+            .bind("NewDirection", function (direction) {
+                if (direction.x < 0) {
+                	this.faceDirection = DIRECTION.LEFT;
+                    if (!this.isPlaying("walk_left"))
+                        this.stop().animate("walk_left", 10, -1);
+                }
+                if (direction.x > 0) {
+                	this.faceDirection = DIRECTION.RIGHT;
+                    if (!this.isPlaying("walk_right"))
+                        this.stop().animate("walk_right", 10, -1);
+                }
+                if (direction.y < 0) {
+                    if (!this.isPlaying("walk_up"))
+                        this.stop().animate("walk_up", 10, -1);
+                }
+                if (direction.y > 0) {
+                    if (!this.isPlaying("walk_down"))
+                        this.stop().animate("walk_down", 10, -1);
+                }
+                if(!direction.x && !direction.y) {
+                    this.stop();
+                }
             })
-            .bind("FaceNewDirection",
-                    function (direction) {
-                        if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
-                        	this.faceDirection = DIRECTION.LEFT;
-                            if (!this.isPlaying("walk_left"))
-                                this.stop().animate("walk_left", 10, 1);
-                        }
-                        if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
-                        	this.faceDirection = DIRECTION.RIGHT;
-                            if (!this.isPlaying("walk_right"))
-                                this.stop().animate("walk_right", 10, 1);
-                        }
+            .bind("FaceNewDirection", function (direction) {
+                if (direction < 0 && this.faceDirection != DIRECTION.LEFT) {
+                	this.faceDirection = DIRECTION.LEFT;
+                    if (!this.isPlaying("walk_left"))
+                        this.stop().animate("walk_left", 10, 1);
+                }
+                if (direction > 0 && this.faceDirection != DIRECTION.RIGHT) {
+                	this.faceDirection = DIRECTION.RIGHT;
+                    if (!this.isPlaying("walk_right"))
+                        this.stop().animate("walk_right", 10, 1);
+                }
             })
 //	                .onHit("solid", function(hit) {
 //	                    for (var i = 0; i < hit.length; i++) {

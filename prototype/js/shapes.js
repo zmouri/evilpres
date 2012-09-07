@@ -21,6 +21,8 @@ Crafty.c("Circle", {
        );
        ctx.closePath();
        ctx.stroke();
+       
+       return this;
     }
 });
 
@@ -47,6 +49,8 @@ Crafty.c("SolidCircle", {
        );
        ctx.closePath();
        ctx.fill();
+       
+       return this;
     }
 });
 
@@ -74,5 +78,7 @@ Crafty.c("SolidPolygon", {
         }
         ctx.closePath();
         ctx.fill();
+        
+        return this;
     }
 });

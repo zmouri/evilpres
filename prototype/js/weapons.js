@@ -39,7 +39,7 @@ Crafty.c('LineOfSightAttack', {
             	Crafty.audio.stop("lineofsight1");
             	
                 // create explosion
-            	var explosion = Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
+            	var explosion = Crafty.e("2D, ProjectileExplosion")
         							.attr({x: this.x, y: this.y, z: 4})
         							.SetAttacker(this.attacker);
             	queuedBodies.push(explosion);
@@ -83,7 +83,7 @@ Crafty.c('ExplodingProjectile', {
             	Crafty.audio.stop("projectile1");
             	
                 // create explosion
-            	var explosion = Crafty.e("2D, DOM, Box2D, ProjectileExplosion")
+            	var explosion = Crafty.e("2D, ProjectileExplosion")
         							.attr({x: this.x, y: this.y, z: 4})
         							.SetAttacker(this.attacker);
             	queuedBodies.push(explosion);
@@ -123,27 +123,28 @@ Crafty.c('ProjectileExplosion', {
     	// TODO uses collision because we still have some non-box2d elements that need to be removed
     	// box2d won't collide with non-box2d elements
     	// also this needs to be dynamic, because two static objects also cannot collide
-        this.requires("2D, DOM, Box2D, Collision, WiredHitBox, " + graphic)
-            .box2d({
-            	density: 1,
-        		bodyType: 'dynamic',
-            })
-			.collision()
-//                .onContact('explodable', function(o) {
-//                	console.log('contact explodable');
-//                    for(var i = 0; i < o.length; i++) {
-//                        o[i].obj.trigger("HitByExplosion");
-//                    }
-//                })
-            .onHit('explodable', function(o) {
-            	console.log('hit explodable');
-                for(var i = 0; i < o.length; i++) {
-                    o[i].obj.trigger("HitByExplosion");
-                }
-                
-                // TODO use circle
-                Crafty("Ground").SetDeletedPixels({x: this.x - 50, y: this.y - 50}, {x: this.x + 50, y: this.y + 50});
-            })
+        this.requires("2D, Canvas, SolidCircle")
+//            .box2d({
+//            	density: 1,
+//        		bodyType: 'dynamic',
+//            })
+    		.SolidCircle(EXPLOSION_RADIUS, "#000000")
+//			.collision()
+////                .onContact('explodable', function(o) {
+////                	console.log('contact explodable');
+////                    for(var i = 0; i < o.length; i++) {
+////                        o[i].obj.trigger("HitByExplosion");
+////                    }
+////                })
+//            .onHit('explodable', function(o) {
+//            	console.log('hit explodable');
+//                for(var i = 0; i < o.length; i++) {
+//                    o[i].obj.trigger("HitByExplosion");
+//                }
+//                
+//                // TODO use circle
+//                Crafty("Ground").SetDeletedPixels({x: this.x - 50, y: this.y - 50}, {x: this.x + 50, y: this.y + 50});
+//            })
 //                .onHit('player', function(o) {
 //                	console.log('hit player');
 //                    for(var i = 0; i < o.length; i++) {
@@ -160,24 +161,36 @@ Crafty.c('ProjectileExplosion', {
             	Crafty.audio.stop("explosion1");
                 destroyedBodies.push(this);
             }, 2000);
-//                .bind("EnterFrame", function() {
-//                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
-//                });
+//            .bind("EnterFrame", function() {
+//            	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
+//            });
 
-        this.body.SetGravityScale(0);
-        this.body.SetUserData(this);	// TODO is this needed?
-        this.body.SetFixedRotation(true);
-        
-        // add circle censor
-        var circle = new b2CircleShape();
-        circle.SetRadius(EXPLOSION_RADIUS/PIXEL2METER_RATIO);
-        
-        var fixture = new b2FixtureDef();
-        fixture.shape = circle;
-        fixture.isSensor = true;
-//            fixture.filter.categoryBits = RADAR_SENSOR;
-//            fixture.filter.maskBits = ENEMY_AIRCRAFT;//radar only collides with aircraft
-            this.body.CreateFixture(fixture);
+	    	// TODO using the selector does not work, it returns a shallow copy of the entity without the collision map
+	    	// we can get the actual entity itself by searching the map
+	    	// need to pass in just the bounding rectangle of this explosion 
+	//    	var ground = Crafty("Ground");
+			var entities = Crafty.map.search({ _x: this.x - EXPLOSION_RADIUS, _y: this.y - EXPLOSION_RADIUS, _w: 2 * EXPLOSION_RADIUS, _h: 2 * EXPLOSION_RADIUS });
+			
+			for(var i = 0; i < entities.length; i++) {
+				obj = entities[i];
+				if(obj.__c["Ground"]) {
+	            	obj.trigger("ExplodePixels", {entity: this});
+				}
+			}
+//        this.body.SetGravityScale(0);
+//        this.body.SetUserData(this);	// TODO is this needed?
+//        this.body.SetFixedRotation(true);
+//        
+        	// add circle sensor
+//	        var circle = new b2CircleShape();
+//	        circle.SetRadius(EXPLOSION_RADIUS/PIXEL2METER_RATIO);
+//	        
+//	        var fixture = new b2FixtureDef();
+//	        fixture.shape = circle;
+//	        fixture.isSensor = true;
+////            fixture.filter.categoryBits = RADAR_SENSOR;
+////            fixture.filter.maskBits = ENEMY_AIRCRAFT;//radar only collides with aircraft
+//            this.body.CreateFixture(fixture);
             return this;
         },
     });
