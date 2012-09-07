@@ -46,6 +46,9 @@ Crafty.c('LineOfSightAttack', {
                 
                 // remove projectile
                 destroyedBodies.push(this);
+            })
+            .bind("Remove", function() {
+            	Crafty.audio.stop("lineofsight1");
             });
 //                .bind("EnterFrame", function() {
 //                	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
@@ -90,6 +93,9 @@ Crafty.c('ExplodingProjectile', {
                 
                 // remove projectile
                 destroyedBodies.push(this);
+            })
+            .bind("Remove", function() {
+            	Crafty.audio.stop("projectile1");
             });
         
         return this;
@@ -160,14 +166,17 @@ Crafty.c('ProjectileExplosion', {
             .timeout(function() {
             	Crafty.audio.stop("explosion1");
                 destroyedBodies.push(this);
-            }, 2000);
+            }, 2000)
+            .bind("Remove", function() {
+            	Crafty.audio.stop("explosion1");
+            });
 //            .bind("EnterFrame", function() {
 //            	this.body.ApplyForce({x: 0, y: this.body.GetMass() * -1 * GRAVITY}, this.body.GetWorldCenter());	// cancel gravity
 //            });
 
-	    	// TODO using the selector does not work, it returns a shallow copy of the entity without the collision map
+	    	// using the selector does not work, it returns a shallow copy of the entity without the collision map
+        	// why??
 	    	// we can get the actual entity itself by searching the map
-	    	// need to pass in just the bounding rectangle of this explosion 
 	//    	var ground = Crafty("Ground");
 			var entities = Crafty.map.search({ _x: this.x - EXPLOSION_RADIUS, _y: this.y - EXPLOSION_RADIUS, _w: 2 * EXPLOSION_RADIUS, _h: 2 * EXPLOSION_RADIUS });
 			
@@ -175,6 +184,10 @@ Crafty.c('ProjectileExplosion', {
 				obj = entities[i];
 				if(obj.__c["Ground"]) {
 	            	obj.trigger("ExplodePixels", {entity: this});
+				}
+				if(obj.__c["Character"]) {
+					console.log("hit player");
+	            	obj.trigger("HitByExplosion", this.attacker);
 				}
 			}
 //        this.body.SetGravityScale(0);

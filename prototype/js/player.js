@@ -106,9 +106,9 @@ Crafty.c('Character', {
 	    			this.disableControls = true;
                 }
             })
-            .bind("SetHp", function(args) {
-            	var newHp = args[0];
-            	var attacker = args[1];
+            .bind("SetHp", function(damage) {
+            	var newHp = this.hp - damage.amount;
+            	var attacker = damage.from;
 
     			this.hp = newHp;
             	console.log("player " + this.playerNum + " new hp: " + this.hp);
@@ -117,20 +117,20 @@ Crafty.c('Character', {
             })
             .bind("Drowned", function() {
             	console.log("player " + this.playerNum + " drowned");
-            	this.trigger("SetHp", [0, this]);
+            	this.trigger("SetHp", {amount: this.hp, from: this});
             })
-            .bind("HitByExplosion", function (attacker) {
+            .bind("HitByExplosion", function (originalAttacker) {
             	console.log("player " + this.playerNum + " hit by explosion");
-                this.trigger("TakeDamage", [attacker, "explosion"]);
+                this.trigger("TakeDamage", {attacker: originalAttacker, type: "explosion"});
             })
-            .bind("TakeDamage", function (args) {
-            	var attacker = args[0];
-            	var attackType = args[1];
+            .bind("TakeDamage", function (attack) {
+            	var attacker = attack.attacker;
+            	var attackType = attack.type;
 
             	console.log("player " + this.playerNum + " taking damage from " + attacker.playerNum);
                 if (attackType === "explosion") {
                 	// TODO reduce this by distance, and pass in ability instead of using constant
-                	this.trigger("SetHp", [this.hp - EXPLOSION_DAMAGE, attacker]);
+                	this.trigger("SetHp", {amount: EXPLOSION_DAMAGE, from: attacker});
                 }
             })
             .bind("CheckDeath", function (attacker) {

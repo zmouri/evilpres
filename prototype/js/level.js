@@ -191,8 +191,8 @@ function generateWorld() {
         .attr({ x: 0, y: 0})
         .box2d({
             bodyType: 'static',
-            shape: [[0, WINDOW_HEIGHT],
-                    [WINDOW_WIDTH, WINDOW_HEIGHT]]
+            shape: [[-10 * WINDOW_WIDTH, WINDOW_HEIGHT],
+                    [10 * WINDOW_WIDTH, WINDOW_HEIGHT]]
         });
         
 //	    var floor = Crafty.e("2D, DOM, Box2D, ground, explodable")
