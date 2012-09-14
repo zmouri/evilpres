@@ -1,6 +1,7 @@
-var currentTurn = 1;
+var currentTeam = 0;
 var destroyedBodies = [];
 var queuedBodies = [];
+var teams = [];
 	
 $(document).ready(function () {	
 	//start crafty

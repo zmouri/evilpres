@@ -6,30 +6,39 @@ var DIRECTION = {
 		LEFT : -1,
 		RIGHT: 1,
 };
+var IMG_INDICATOR = "img/arrow.png";
 
 Crafty.c('Character', {
 	isFiring: false,
 	powerAmount: 0,
 	faceDirection: 0,
 	playerNum: 0,
+	teamNum: 0,
 	hp: INITIAL_PLAYER_HP,
 	hpBar : null,
+	indicator : null,
 	
-	Character: function(num) {
-		this.playerNum = num;
-
+	Character: function(playerNum, teamNum, spriteNum) {
+		this.playerNum = playerNum;
+		this.teamNum = teamNum;
+		
         this.hpBar = Crafty.e("HPBarOuter")
-		        		.attr({ x: this.x, y: this.y - 16, z: this.z, w: this.w, h: 5 })
+		        		.attr({ x: this.x, y: this.y - 16, z: 10, w: this.w, h: 5 })
 		        		.HPBarOuter()
 		        		.SetHp(1);	// 100%
+        
+        this.indicator = Crafty.e("CurrentPlayerIndicator")
+							.attr({ x: this.x, y: this.y - 32, z: 10, w: 16, h: 16 })
+							.CurrentPlayerIndicator();
 			
             //setup animations
         this.requires("SpriteAnimation, PlayerControl, Box2D")
-            .animate("walk_left", 6, this.playerNum + 2, 8)
-            .animate("walk_right", 9, this.playerNum + 2, 11)
-            .animate("walk_up", 3, this.playerNum + 2, 5)
-            .animate("walk_down", 0, this.playerNum + 2, 2)
+            .animate("walk_left", 6, spriteNum, 8)
+            .animate("walk_right", 9, spriteNum, 11)
+            .animate("walk_up", 3, spriteNum, 5)
+            .animate("walk_down", 0, spriteNum, 2)
             .attach(this.hpBar)
+            .attach(this.indicator)
             .box2d({
             	bodyType: 'dynamic',
             	density: 1
@@ -89,22 +98,24 @@ Crafty.c('Character', {
 //                .onContact("explosion", function() {
 //                    this.trigger("TakeDamage", [null, "explosion"]);	// TODO how do we get attacker here?
 //                })
-            .bind("StartTurn", function (turnNum) {
-                if (this.playerNum === turnNum) {
+            .bind("StartTurn", function () {
+//                if (this.playerNum === turnNum) {
                 	this.addComponent("RangedAttacker")
 //                    		.BombDropper()
                 		.RangedAttacker();
                 	
 	    			this.disableControls = false;
-                }
+	    			this.SetCurrentPlayer();
+//                }
             })
-            .bind("EndTurn", function (turnNum) {
-                if (this.playerNum === turnNum) {
+            .bind("EndTurn", function () {
+//                if (this.playerNum === turnNum) {
     	    		this.removeComponent("RangedAttacker")
     	    			.unbind('MouseDown');
     	    	    
 	    			this.disableControls = true;
-                }
+	    			this.UnsetCurrentPlayer();
+//                }
             })
             .bind("SetHp", function(damage) {
             	var newHp = this.hp - damage.amount;
@@ -137,13 +148,30 @@ Crafty.c('Character', {
                 if (this.hp <= 0) {
                 	console.log("player " + this.playerNum + " died");
                     destroyedBodies.push(this);
-                	
-                	Crafty.trigger("GameOver", this);
+                    
+                    Crafty.trigger("RemoveFromTeam", this);                	
+                	Crafty.trigger("CheckGameOver");
                 }
             });
 
 		console.log("created player " + this.playerNum + " represented by entity " + this[0]);
         return this;
+    },
+    
+    SetCurrentPlayer: function() {
+    	// set visibility for both indicator and image
+    	this.indicator.visible = true;
+    	this.indicator._children[0].visible = true;
+    	this.indicator._children[0].width = 16;
+    	this.indicator._children[0].height = 16;
+    	return this;
+    },
+    
+    UnsetCurrentPlayer: function() {
+    	// set visibility for both indicator and image
+    	this.indicator.visible = false;
+    	this.indicator._children[0].visible = false;
+    	return this;
     },
 });
 
@@ -196,6 +224,22 @@ Crafty.c("HPBarInner", {
 		}
 		return this;
 	}
+});
+
+Crafty.c("CurrentPlayerIndicator", {    	
+	init: function() {
+		this.requires("2D, DOM");
+		return this;
+	},	
+
+	CurrentPlayerIndicator: function() {
+		var image = Crafty.e("2D, DOM, Image")
+						.attr({x: this.x, y: this.y, z: this.z})
+						.image(IMG_INDICATOR);
+		
+		this.attach(image);
+		return this;
+	},
 });
 
 Crafty.c('RangedAttacker', {
@@ -268,13 +312,28 @@ Crafty.c("PlayerControl", {
 });
 
 function endTurn() {
-	Crafty.trigger("EndTurn", currentTurn);
-	
-	currentTurn++;
-	if(currentTurn > MAX_PLAYERS) {
-		currentTurn = 1;
+	getCurrentPlayer().trigger("EndTurn");
+
+	currentTeam++;
+	if(currentTeam >= teams.length) {
+		currentTeam = 0;
 	}
-	Crafty.trigger("UpdateTurn");
 	
-	Crafty.trigger("StartTurn", currentTurn);
+	var currentPlayerNum = getCurrentPlayerNum() + 1;
+	if(currentPlayerNum >= teams[currentTeam].players.length) {
+		currentPlayerNum = 0;
+	}
+	setCurrentPlayerNum(currentPlayerNum);
+}
+
+function getCurrentPlayerNum() {
+	return teams[currentTeam].currentPlayerNum;
+}
+
+function setCurrentPlayerNum(playerNum) {
+	teams[currentTeam].currentPlayerNum = playerNum;
+}
+
+function getCurrentPlayer() {
+	return teams[currentTeam].players[getCurrentPlayerNum()];
 }

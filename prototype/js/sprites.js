@@ -10,6 +10,7 @@ Crafty.sprite(16, IMG_SPRITE, {
     bush: [0, 2],
     player_bman: [0, 3],
     player_iman: [0, 4],
+    player_iman2: [0, 4],
     projectile: [4, 0],
     lineofsight: [4, 1],
     empty: [4, 0],

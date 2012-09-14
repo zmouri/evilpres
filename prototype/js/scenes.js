@@ -17,7 +17,7 @@ Crafty.scene("loading", function () {
 	                .css({ "text-align": "center" });
     
     //load takes an array of assets and a callback when complete
-    Crafty.load([IMG_SPRITE, IMG_SKY], function () {
+    Crafty.load([IMG_SPRITE, IMG_SKY, IMG_INDICATOR], function () {
     	Crafty.audio.play("title", -1, 0.5);
         $('#startscreen').show();
         text.destroy();
@@ -25,16 +25,18 @@ Crafty.scene("loading", function () {
 });
 
 
-Crafty.scene("main", function () {
+Crafty.scene("main", function () {	
     var bars = {
         power: $('#power'),
-        turn: $('#turn'),
+        team: $('#team'),
+        player: $('#player'),
     };
     bars.power.addClass('green');
     
     var info = {
         powerAmount: bars.power.find('.text'),
-        turn: bars.turn.find('.text'),
+        team: bars.team.find('.text'),
+        player: bars.player.find('.text'),
     };
 
     $('#interface').show();
@@ -47,19 +49,39 @@ Crafty.scene("main", function () {
             .PlayerControl(2, 20)
             .RangedAttacker()
 //            .BombDropper()
-            .Character(1);
+            .Character(0, 0, 3)
+            .SetCurrentPlayer();
     
     var player2 = Crafty.e("2D, DOM, Box2D, Character, player_iman, Mouse, PlayerControl, lineOfSightAttacker")
 	        .attr({ x: 800, y: 70, z: 5 })
             .PlayerControl(2, 4)
-	        .Character(2);
+	        .Character(1, 1, 4)
+            .UnsetCurrentPlayer();
+    
+    var player3 = Crafty.e("2D, DOM, Box2D, Character, player_iman2, Mouse, PlayerControl, lineOfSightAttacker")
+	        .attr({ x: 400, y: 240, z: 5 })
+            .PlayerControl(2, 4)
+	        .Character(2, 1, 4)
+            .UnsetCurrentPlayer();
     		
     player1.body.SetFixedRotation(true);
     player2.body.SetFixedRotation(true);
+    player3.body.SetFixedRotation(true);
+    
+    // assign teams
+    teams[0] = {
+    		currentPlayerNum: 0,	// first team starts at 0
+    		players: [player1],
+	};
+    teams[1] = {
+    		currentPlayerNum: -1,
+    		players: [player2, player3],
+	};
     
     // setup controls
     player1.disableControls = false;
     player2.disableControls = true;
+    player3.disableControls = true;
 //    Crafty.trigger("StartTurn", currentTurn);	// todo this isn't working, not sure why
     
     Crafty.bind("UpdatePower", function(player) {
@@ -67,7 +89,8 @@ Crafty.scene("main", function () {
     });
     
     Crafty.bind("UpdateTurn", function() {
-    	info.turn.text(currentTurn);
+    	info.team.text(currentTeam);
+    	info.player.text(getCurrentPlayer().playerNum);
     });    	
 
     Crafty.bind("Firing", function(player) {
@@ -76,10 +99,34 @@ Crafty.scene("main", function () {
         $(document).on('mouseup', {player: player}, fireProjectile);
     });
 
-    Crafty.bind("GameOver", function(loser) {
-    	var winner = loser.playerNum === 1 ? 2 : 1;
+    Crafty.bind("RemoveFromTeam", function(player) {
+    	// TODO optimize this, this is terrible
+    	for(var i = 0; i < teams.length; i++) {
+    		if(i === player.teamNum) {
+    			for(var j = 0; j < teams[i].players.length; j++) {
+    				if(teams[i].players[j].playerNum == player.playerNum) {
+    					teams[i].players.splice(j, 1);
+    					return;
+    				}
+    			}
+    		}
+    	}
+    });
+
+    Crafty.bind("CheckGameOver", function() {
+    	for(var i = 0; i < teams.length; i++) {
+    		if(teams[i].players.length === 0) {
+    			Crafty.trigger("GameOver", i);
+    			break;
+    		}
+    		
+    	}
+    });
+    
+    Crafty.bind("GameOver", function(teamNum) {
+    	var winner = teamNum === 0 ? 1 : 0;	// TODO refactor to do more than two teams
         var text = Crafty.e("2D, DOM, Text").attr({ w: 300, h: 20, x: WINDOW_WIDTH / 2 - 60, y: WINDOW_HEIGHT / 2, z: 100 })
-			            .text("Player " + loser.playerNum + " has died! Player " + winner + " has won! You are winner ha ha ha!")
+			            .text("All players on team " + (teamNum) + " have died! Team " + (winner) + " has won! You are winner ha ha ha!")
 			            .css({ "text-align": "center", "color": "black" });
     });
 

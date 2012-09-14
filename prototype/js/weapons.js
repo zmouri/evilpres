@@ -168,6 +168,9 @@ Crafty.c('ProjectileExplosion', {
             .timeout(function() {
             	Crafty.audio.stop("explosion1");
                 destroyedBodies.push(this);
+
+            	Crafty.trigger("UpdateTurn");
+            	getCurrentPlayer().trigger("StartTurn");
             }, 2000)
             .bind("Remove", function() {
             	Crafty.audio.stop("explosion1");
