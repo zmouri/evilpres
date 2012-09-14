@@ -38,6 +38,9 @@ var contactListener = {
  			}
  			else {
  				destroyedBodies.push(entityB);
+            	
+            	Crafty.trigger("UpdateTurn");
+            	getCurrentPlayer().trigger("StartTurn");
  			}
 		} 
 		
@@ -49,6 +52,9 @@ var contactListener = {
  			}
  			else {
  				destroyedBodies.push(entityA);
+            	
+            	Crafty.trigger("UpdateTurn");
+            	getCurrentPlayer().trigger("StartTurn");
  			}
 		}
 		

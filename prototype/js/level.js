@@ -68,6 +68,7 @@ Crafty.c("Ground", {
 	        // only when there was an explosion and the collision data needs to be redrawn
 	        // otherwise, draw image data along with collision data
 	        if(this.isDirty) {
+	        	// TODO bug here: if we scroll away from a character and they aren't in view when this is processed, they will fall through the floor and die
 		        var imageData = ctx.getImageData(Crafty.viewport.x, Crafty.viewport.y, canvasWidth, canvasHeight);
 		        var buf = new ArrayBuffer(imageData.data.length);
 		        var buf8 = new Uint8ClampedArray(buf);

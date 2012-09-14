@@ -17,7 +17,7 @@ Crafty.scene("loading", function () {
 	                .css({ "text-align": "center" });
     
     //load takes an array of assets and a callback when complete
-    Crafty.load([IMG_SPRITE, IMG_SKY, IMG_INDICATOR], function () {
+    Crafty.load([IMG_SPRITE, IMG_SKY, IMG_INDICATOR, IMG_LEVEL1], function () {
     	Crafty.audio.play("title", -1, 0.5);
         $('#startscreen').show();
         text.destroy();

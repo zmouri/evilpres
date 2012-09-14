@@ -164,6 +164,8 @@ Crafty.c('Character', {
     	this.indicator._children[0].visible = true;
     	this.indicator._children[0].width = 16;
     	this.indicator._children[0].height = 16;
+    	
+    	Crafty.viewport.centerOn(this, 10);	// move viewport to current player
     	return this;
     },
     

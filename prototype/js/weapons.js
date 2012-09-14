@@ -47,6 +47,14 @@ Crafty.c('LineOfSightAttack', {
                 // remove projectile
                 destroyedBodies.push(this);
             })
+            .bind("Move", function(position) {
+            	// follow if it goes off the stage
+            	if(position._x < Crafty.viewport.x || position._x > Crafty.viewport.x 
+            			|| position._y < Crafty.viewport.y || position._y > Crafty.viewport.y) {
+                	console.log("moved off stage: " + position._x + ", " + position._y);
+//            		Crafty.viewport.follow(this, 0, 0);	// TODO: jerky, needs to be smoother
+            	}
+            })
             .bind("Remove", function() {
             	Crafty.audio.stop("lineofsight1");
             });
@@ -93,6 +101,14 @@ Crafty.c('ExplodingProjectile', {
                 
                 // remove projectile
                 destroyedBodies.push(this);
+            })
+            .bind("Move", function(position) {
+            	// follow if it goes off the stage
+            	if(position._x < Crafty.viewport.x || position._x > Crafty.viewport.x 
+            			|| position._y < Crafty.viewport.y || position._y > Crafty.viewport.y) {
+                	console.log("moved off stage: " + position._x + ", " + position._y);
+//            		Crafty.viewport.follow(this, 0, 0);	// TODO: jerky, needs to be smoother
+            	}
             })
             .bind("Remove", function() {
             	Crafty.audio.stop("projectile1");
