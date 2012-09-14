@@ -27,15 +27,39 @@ Crafty.c("Ground", {
 	        for(var i = 0; i < this.deletedPixels.length; i++) {
 	        	var point1 = this.deletedPixels[i].point1;
 	        	var point2 = this.deletedPixels[i].point2;
-	    	    var imageData = ctx.getImageData(point1.x + Crafty.viewport.x, point1.y + Crafty.viewport.y, point2.x - point1.x, point2.y - point1.y);
-	    	    
-	    	    for (var x = 0; x < imageData.width; x++) {
-	    	    	for (var y = 0; y < imageData.height; y++) {
-	    	    		var alphaOffset = (y * imageData.width + x) * 4 + 3;
-	    	    		imageData.data[alphaOffset] = 0;	// set alpha to 0
-	    	    	}
-	    	    }
-	    	    ctx.putImageData(imageData, point1.x + Crafty.viewport.x, point1.y + Crafty.viewport.y);
+	        	var center = this.deletedPixels[i].center;
+	        	var radius = this.deletedPixels[i].radius;
+	        	
+	        	// rectangle area
+	        	if(point1 && point2) {
+		    	    var imageData = ctx.getImageData(point1.x + Crafty.viewport.x, point1.y + Crafty.viewport.y, point2.x - point1.x, point2.y - point1.y);
+		    	    
+		    	    for (var x = 0; x < imageData.width; x++) {
+		    	    	for (var y = 0; y < imageData.height; y++) {
+		    	    		var alphaOffset = (y * imageData.width + x) * 4 + 3;
+		    	    		imageData.data[alphaOffset] = 0;	// set alpha to 0
+		    	    	}
+		    	    }
+		    	    ctx.putImageData(imageData, point1.x + Crafty.viewport.x, point1.y + Crafty.viewport.y);
+	        	}
+        		// circle area
+	        	else if(center && radius) {
+	        		var upperLeft = {x: center.x - radius, y: center.y - radius};
+		    	    var imageData = ctx.getImageData(upperLeft.x + Crafty.viewport.x, upperLeft.y + Crafty.viewport.y, radius * 2, radius * 2);
+		    	    
+		    	    for (var x = 0; x < imageData.width; x++) {
+		    	    	for (var y = 0; y < imageData.height; y++) {
+		    	    		var xDiff = upperLeft.x + x - center.x;
+		    	    		var yDiff = upperLeft.y + y - center.y;
+		    	    		var distanceFromCenter = xDiff * xDiff + yDiff * yDiff;
+		    	    		if(distanceFromCenter < radius * radius) {
+			    	    		var alphaOffset = (y * imageData.width + x) * 4 + 3;
+			    	    		imageData.data[alphaOffset] = 0;	// set alpha to 0		    	    			
+		    	    		}
+		    	    	}
+		    	    }
+		    	    ctx.putImageData(imageData, upperLeft.x + Crafty.viewport.x, upperLeft.y + Crafty.viewport.y);
+	        	}
 	        }
 
 	        // set up pixel buffers
@@ -161,7 +185,8 @@ Crafty.c("Ground", {
 		
 		this.bind("ExplodePixels", function(collision) {
 			// TODO change to circle
-			this.deletedPixels.push({point1: {x: collision.entity.x - 50, y: collision.entity.y - 50}, point2: {x: collision.entity.x + 50, y: collision.entity.y + 50}});
+			this.deletedPixels.push({center: {x: collision.entity.x, y: collision.entity.y}, radius: collision.entity.radius});
+//			this.deletedPixels.push({point1: {x: collision.entity.x - 50, y: collision.entity.y - 50}, point2: {x: collision.entity.x + 50, y: collision.entity.y + 50}});
 			this.isDirty = true;
 		});
     },

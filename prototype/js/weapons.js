@@ -117,6 +117,7 @@ Crafty.c('ExplodingProjectile', {
 
 Crafty.c('ProjectileExplosion', {
 	attacker: null,
+	radius: 0,
 	
 	SetAttacker: function(attacker) {
 		this.attacker = attacker;
@@ -125,6 +126,7 @@ Crafty.c('ProjectileExplosion', {
 	
     Explode: function(graphic) {
     	Crafty.audio.play("explosion1", -1);
+    	this.radius = EXPLOSION_RADIUS;
     	
     	// TODO uses collision because we still have some non-box2d elements that need to be removed
     	// box2d won't collide with non-box2d elements
@@ -134,7 +136,7 @@ Crafty.c('ProjectileExplosion', {
 //            	density: 1,
 //        		bodyType: 'dynamic',
 //            })
-    		.SolidCircle(EXPLOSION_RADIUS, "#000000")
+    		.SolidCircle(this.radius, "#000000")
 //			.collision()
 ////                .onContact('explodable', function(o) {
 ////                	console.log('contact explodable');
@@ -178,7 +180,7 @@ Crafty.c('ProjectileExplosion', {
         	// why??
 	    	// we can get the actual entity itself by searching the map
 	//    	var ground = Crafty("Ground");
-			var entities = Crafty.map.search({ _x: this.x - EXPLOSION_RADIUS, _y: this.y - EXPLOSION_RADIUS, _w: 2 * EXPLOSION_RADIUS, _h: 2 * EXPLOSION_RADIUS });
+			var entities = Crafty.map.search({ _x: this.x - this.radius, _y: this.y - this.radius, _w: 2 * this.radius, _h: 2 * this.radius });
 			
 			for(var i = 0; i < entities.length; i++) {
 				obj = entities[i];
